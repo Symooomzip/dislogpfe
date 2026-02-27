@@ -8,7 +8,7 @@
 | --------------------------- | ---------------------------------------------------------------------- |
 | **Titre du projet**         | Analyse de la Valeur Client, Segmentation et Système de Recommandation |
 | **Organisme d'accueil**     | Dislog Group                                                           |
-| **Domaine**                 | Data Science & Business Intelligence                                   |
+| **Domaine**                 | Data Science & AI                                  |
 | **Durée estimée**           | 5 à 6 mois                                                             |
 | **Date de début**           | Mars 2026                                                              |
 | **Date de fin prévue**      | Août 2026                                                              |
