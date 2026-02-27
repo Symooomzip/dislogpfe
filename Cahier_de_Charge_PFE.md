@@ -10,8 +10,8 @@
 | **Organisme d'accueil**     | Dislog Group                                                           |
 | **Domaine**                 | Data Science & AI                                  |
 | **Durée estimée**           | 5 à 6 mois                                                             |
-| **Date de début**           | Mars 2026                                                              |
-| **Date de fin prévue**      | Août 2026                                                              |
+| **Date de début**           | fevrier 2026                                                              |
+| **Date de fin prévue**      | june 2026                                                              |
 | **Encadrant(e) entreprise** | oussamaguemmar                                                         |
 | \_                          |
 | **Encadrant(e) académique** | Boutaina ETTETUANI                                                     |
