@@ -1,464 +1,336 @@
-# Cahier de Charge — Projet de Fin d'Études
+# **Dislog Group Data Analysis**
+
+Welcome to the **Data Analysis By Dislog Group**! This repository is designed to help trainees learn data warehousing, SQL querying, and data analysis using a structured database schema. The goal is to transform raw transactional data into actionable insights.
 
 ---
 
-## 📄 Informations Générales
-
-| Élément                     | Détail                                                                 |
-| --------------------------- | ---------------------------------------------------------------------- |
-| **Titre du projet**         | Analyse de la Valeur Client, Segmentation et Système de Recommandation |
-| **Organisme d'accueil**     | Dislog Group                                                           |
-| **Domaine**                 | Data Science & Business Intelligence                                   |
-| **Durée estimée**           | 5 à 6 mois                                                             |
-| **Date de début**           | Mars 2026                                                              |
-| **Date de fin prévue**      | Août 2026                                                              |
-| **Encadrant(e) entreprise** | _(à compléter)_                                                        |
-| **Encadrant(e) académique** | _(à compléter)_                                                        |
-| **Stagiaire**               | _(à compléter)_                                                        |
-| **Établissement**           | _(à compléter)_                                                        |
+## **Table of Contents**
+1. [Introduction](#introduction)
+2. [Dataset](#dataset)
+3. [Database Schema](#database-schema)
+4. [Data Confidentiality](#data-confidentiality)
+5. [Analysis Subjects](#analysis-subjects)
+6. [Getting Started](#getting-started)
+7. [Collaboration Guidelines](#collaboration-guidelines)
 
 ---
 
-## 1. Contexte du Projet
+## **Introduction**
 
-### 1.1 Présentation de l'organisme d'accueil
+This project provides a simplified yet realistic database schema for a sales and invoicing system. The schema is designed to simulate a real-world scenario where trainees can practice building a data warehouse and performing various types of data analysis.
 
-**Dislog Group** est un acteur majeur de la distribution et de la logistique au Maroc. Le groupe gère un large portefeuille de marques et assure la distribution de produits à travers tout le territoire national, couvrant plusieurs régions et secteurs d'activité.
-
-### 1.2 Contexte et problématique
-
-Dans un marché compétitif, la connaissance client constitue un levier stratégique essentiel. Dislog Group dispose d'un volume important de données transactionnelles (commandes, factures, clients, produits) mais n'exploite pas encore pleinement le potentiel de ces données pour :
-
-- **Comprendre la valeur réelle de chaque client** et identifier les clients les plus rentables.
-- **Anticiper le comportement client**, notamment le risque de perte (churn).
-- **Personnaliser les actions commerciales** en fonction des segments de clients.
-- **Découvrir les associations entre produits** pour optimiser les ventes croisées.
-
-### 1.3 Enjeux
-
-| Enjeu            | Description                                                             |
-| ---------------- | ----------------------------------------------------------------------- |
-| **Stratégique**  | Mieux connaître les clients pour orienter la stratégie commerciale      |
-| **Opérationnel** | Identifier les clients à risque de churn et agir de manière proactive   |
-| **Commercial**   | Augmenter le panier moyen grâce aux recommandations de produits         |
-| **Décisionnel**  | Fournir des tableaux de bord interactifs pour le pilotage de l'activité |
+The dataset includes information about customers, products, sales, promotions, and invoices. Trainees will use this data to:
+- Build a data warehouse.
+- Perform exploratory data analysis (EDA).
+- Generate insights and visualizations.
 
 ---
 
-## 2. Objectifs du Projet
+## **Dataset**
 
-### 2.1 Objectif principal
+The dataset used in this project is hosted on Google Drive. Follow these steps to download and use it:
 
-Développer une solution complète de Data Science permettant d'analyser la valeur client, segmenter la base clientèle, prédire le churn et proposer un système de recommandation de produits à partir des données transactionnelles de Dislog Group.
+1. **Access the Dataset**:
+   - Visit the following link: [Google Drive Folder](https://drive.google.com/drive/folders/1gHgJSyr3DrrPCzMA5PZHGKpZejUjm47D).
+   - If you do not have access to the folder, please request permission by contacting the repository administrator or sending an email to [o.guemmar@dislogroup.com](o.guemmar@dislogroup.com) or [o.daoud@dislogroup.com](o.daoud@dislogroup.com).
+   - Download the required files and save them to the `data/` directory in your local repository.
 
-### 2.2 Objectifs spécifiques
+2. **File Encoding Note**:
+   - Some files, such as `SalesLine.csv` and `Invoices.csv`, are encoded in **ANSI (1252)** instead of **UTF-8**.
+   - If you encounter encoding issues while loading these files, you may need to convert them to UTF-8 using a text editor or a script. For example, in Python:
+     ```python
+     # Convert ANSI (1252) to UTF-8
+     with open("data/SalesLine.csv", "r", encoding="cp1252") as infile:
+         content = infile.read()
+     with open("data/SalesLine_utf8.csv", "w", encoding="utf-8") as outfile:
+         outfile.write(content)
+     ```
 
-| #   | Objectif                                                             | Livrable attendu                                            |
-| --- | -------------------------------------------------------------------- | ----------------------------------------------------------- |
-| O1  | Concevoir et alimenter un Data Warehouse à partir des données brutes | Pipeline ETL fonctionnel + base de données structurée       |
-| O2  | Réaliser une analyse exploratoire approfondie des données            | Notebooks d'EDA avec visualisations                         |
-| O3  | Construire un modèle de segmentation client basé sur l'analyse RFM   | Modèle de clustering + profils des segments                 |
-| O4  | Développer un modèle de prédiction du churn                          | Modèle ML évalué (précision, rappel, AUC-ROC)               |
-| O5  | Calculer et prédire la valeur vie client (CLV)                       | Modèle prédictif de CLV + classement des clients            |
-| O6  | Construire un système de recommandation de produits _(bonus)_        | Moteur de recommandation basé sur le Market Basket Analysis |
-| O7  | Créer des tableaux de bord interactifs                               | Dashboard de visualisation interactif                       |
-
----
-
-## 3. Périmètre du Projet
-
-### 3.1 Périmètre fonctionnel
-
-#### Inclus dans le périmètre
-
-- ✅ Collecte, nettoyage et transformation des données brutes (CSV)
-- ✅ Conception d'un schéma en étoile (star schema)
-- ✅ Analyse exploratoire des données (EDA)
-- ✅ Segmentation client par analyse RFM et clustering
-- ✅ Modèle de prédiction du churn
-- ✅ Calcul et prédiction de la CLV
-- ✅ Analyse du panier d'achat (Market Basket Analysis)
-- ✅ Système de recommandation léger (filtrage collaboratif)
-- ✅ Tableaux de bord interactifs
-
-#### Exclus du périmètre
-
-- ❌ Déploiement en production (le projet reste au stade prototype)
-- ❌ Intégration avec les systèmes internes de Dislog (ERP, CRM)
-- ❌ Traitement en temps réel (batch processing uniquement)
-- ❌ Application mobile
-
-### 3.2 Périmètre des données
-
-| Table           | Description                                               | Volume estimé |
-| --------------- | --------------------------------------------------------- | ------------- |
-| **Region**      | Référentiel des régions                                   | ~2 Ko         |
-| **Sector**      | Référentiel des secteurs                                  | ~8 Ko         |
-| **Customer**    | Base clients (accountid, nom, région, secteur)            | ~4 Mo         |
-| **Seller**      | Référentiel des vendeurs                                  | ~9 Ko         |
-| **Product**     | Catalogue produits (itemid, nom, marque)                  | ~146 Ko       |
-| **SalesHeader** | En-têtes des commandes (dates, montants)                  | ~123 Mo       |
-| **SalesLine**   | Détail des lignes de commande (produit, qté, prix, promo) | ~719 Mo       |
-| **Invoice**     | Factures (paiements, méthode de paiement)                 | ~66 Mo        |
-
-> [!CAUTION]
-> Les données sont **confidentielles** et ne doivent en aucun cas être partagées publiquement. Toute publication doit être anonymisée.
+3. **Verify the Files**:
+   - Ensure all files are correctly placed in the `data/` directory before proceeding with the analysis.
 
 ---
 
-## 4. Description Fonctionnelle
+## **Database Schema**
 
-### 4.1 Module 1 — Pipeline ETL
+The database consists of the following tables:
 
-```mermaid
-graph LR
-    A[Fichiers CSV bruts] -->|Extraction| B[Python / Pandas]
-    B -->|Transformation| C[Nettoyage & Validation]
-    C -->|Chargement| D[(Data Warehouse)]
-```
+### **Dimension Tables**
+1. **Region**
+   - `regionid`: Unique identifier for the region.
+   - `description`: Description of the region.
 
-**Fonctionnalités** :
+2. **Sector**
+   - `sectorid`: Unique identifier for the sector.
+   - `description`: Description of the sector.
 
-- Lecture des fichiers CSV avec gestion de l'encodage (ANSI/UTF-8)
-- Nettoyage : suppression des doublons, gestion des valeurs manquantes, typage
-- Validation : contrôle d'intégrité référentielle
-- Chargement en masse dans la base de données
+3. **Customer**
+   - `accountid`: Unique identifier for the customer.
+   - `accountname`: Name of the customer.
+   - `regionid`: Foreign key referencing `Region`.
+   - `sectorid`: Foreign key referencing `Sector`.
 
-### 4.2 Module 2 — Analyse Exploratoire (EDA)
+4. **Seller**
+   - `sellerid`: Unique identifier for the seller.
+   - `sellername`: Name of the seller.
 
-**Fonctionnalités** :
+5. **Product**
+   - `itemid`: Unique identifier for the product.
+   - `name`: Name of the product.
+   - `namealias`: Alias name of the product.
+   - `marque`: Brand of the product.
 
-- Distribution des ventes par période (mois, trimestre, année)
-- Répartition géographique du chiffre d'affaires (région, secteur)
-- Analyse des top clients, produits et vendeurs
-- Matrices de corrélation entre variables numériques
+### **Fact Tables**
+1. **SalesHeader**
+   - `saleid`: Unique identifier for the sale.
+   - `accountid`: Foreign key referencing `Customer`.
+   - `sellerid`: Foreign key referencing `Seller`.
+   - `orderdate`: Date of the order.
+   - `delivdate`: Delivery date.
+   - `bruteamount`: Total brute amount.
+   - `netamount`: Net amount.
+   - `taxamount`: Tax amount.
+   - `totalamount`: Total amount.
 
-### 4.3 Module 3 — Segmentation Client
+2. **SalesLine**
+   - `saleid`: Foreign key referencing `SalesHeader`.
+   - `itemid`: Foreign key referencing `Product`.
+   - `qty`: Quantity sold.
+   - `unitprice`: Price per unit.
+   - `httotalamount`: Net total amount.
+   - `ttctotalamount`: Total amount including taxes.
+   - `promotype`: Type of promotion.
+   - `promovalue`: Value of the promotion.
 
-**Méthode** : Analyse RFM + Algorithmes de clustering
-
-| Dimension RFM     | Définition                              |
-| ----------------- | --------------------------------------- |
-| **Recency (R)**   | Nombre de jours depuis le dernier achat |
-| **Frequency (F)** | Nombre total de commandes               |
-| **Monetary (M)**  | Montant total dépensé                   |
-
-**Algorithmes** :
-
-- **K-Means** : Segmentation en k clusters avec optimisation par méthode du coude et score de silhouette
-- **DBSCAN** : Alternative pour détecter les clusters de formes non-sphériques
-- **PCA** : Réduction dimensionnelle pour la visualisation 2D/3D
-
-**Segments attendus** :
-
-| Segment             | Description                                  | Action suggérée           |
-| ------------------- | -------------------------------------------- | ------------------------- |
-| 🏆 Champions        | Acheteurs fréquents, récents, à haute valeur | Programme de fidélité VIP |
-| 💎 Clients fidèles  | Bonne fréquence, valeur moyenne-haute        | Offres de cross-selling   |
-| 🌱 Nouveaux clients | Achat récent mais unique                     | Campagne de bienvenue     |
-| ⚠️ À risque         | Anciens bons clients devenus inactifs        | Campagne de réactivation  |
-| 💤 Dormants         | Aucune activité récente, faible valeur       | Enquête de satisfaction   |
-
-### 4.4 Module 4 — Prédiction du Churn
-
-**Définition du churn** : Un client est considéré en churn s'il n'a effectué aucun achat au cours des 90 derniers jours (seuil ajustable).
-
-**Features utilisées** :
-
-| Feature                   | Description                          |
-| ------------------------- | ------------------------------------ |
-| `recency`                 | Jours depuis le dernier achat        |
-| `frequency`               | Nombre de commandes                  |
-| `monetary`                | Montant total dépensé                |
-| `avg_order_value`         | Montant moyen par commande           |
-| `avg_days_between_orders` | Intervalle moyen entre commandes     |
-| `total_products`          | Nombre de produits distincts achetés |
-| `region`, `sector`        | Variables catégorielles (encodées)   |
-
-**Modèles envisagés** :
-
-| Modèle                | Rôle                                             |
-| --------------------- | ------------------------------------------------ |
-| Régression Logistique | Baseline simple et interprétable                 |
-| Random Forest         | Bonne performance, résistant au surapprentissage |
-| XGBoost               | Performance état de l'art, feature importance    |
-
-**Métriques d'évaluation** : Accuracy, Precision, Recall, F1-Score, AUC-ROC
-
-### 4.5 Module 5 — Valeur Vie Client (CLV)
-
-**Approche** :
-
-1. **CLV historique** : Somme des revenus générés par client
-2. **CLV prédictive** : Modèle BG/NBD + Gamma-Gamma (ou régression) pour estimer la valeur future
-3. **Classification** : Clients en tiers High / Medium / Low value
-
-**Visualisations** :
-
-- Diagramme de Pareto (80/20)
-- Distribution de la CLV par segment
-- Matrice CLV × Risque de churn
-
-### 4.6 Module 6 — Système de Recommandation _(Bonus)_
-
-**Approche en deux volets** :
-
-**a) Market Basket Analysis** :
-
-- Algorithme Apriori / FP-Growth sur les co-achats par commande
-- Métriques : Support, Confiance, Lift
-- Identification des produits complémentaires
-
-**b) Filtrage Collaboratif** :
-
-- Construction de la matrice Client × Produit
-- Similarité cosinus entre clients
-- Recommandation : _"Les clients similaires à vous ont aussi acheté…"_
-
-> [!NOTE]
-> En raison du volume élevé de la table SalesLine (~719 Mo), l'analyse sera réalisée sur un échantillon représentatif ou via l'algorithme FP-Growth, plus efficace que Apriori.
-
-### 4.7 Module 7 — Tableaux de Bord
-
-Dashboard interactif présentant :
-
-- **Vue d'ensemble** : CA total, nombre de clients, panier moyen
-- **Vue segmentation** : Répartition et évolution des segments clients
-- **Vue churn** : Alertes sur les clients à risque
-- **Vue CLV** : Ranking des clients par valeur prédite
-- **Vue géographique** : Performance par région / secteur
-- **Vue recommandations** : Associations de produits les plus fréquentes
+3. **Invoice**
+   - `invoiceid`: Unique identifier for the invoice.
+   - `salesid`: Foreign key referencing `SalesHeader`.
+   - `paymentamount`: Payment amount.
+   - `paymentmethod`: Payment method code (`001`, `102`, `205`).
 
 ---
 
-## 5. Architecture Technique
+## **Data Confidentiality**
 
-### 5.1 Stack technologique
+**IMPORTANT**: The data provided in this repository is confidential and must not be shared publicly or used outside the scope of this training project. Any unauthorized sharing or misuse of the data will result in disciplinary action.
 
-| Couche                | Technologie                                             |
-| --------------------- | ------------------------------------------------------- |
-| **Langage**           | Python 3.11+                                            |
-| **Données**           | Pandas, NumPy                                           |
-| **Base de données**   | SQL Server _(ou SQLite/PostgreSQL selon disponibilité)_ |
-| **Machine Learning**  | Scikit-learn, XGBoost                                   |
-| **Association Rules** | mlxtend (Apriori, FP-Growth)                            |
-| **Visualisation**     | Matplotlib, Seaborn, Plotly                             |
-| **Dashboard**         | Power BI et/ou Streamlit                                |
-| **Notebooks**         | Jupyter Notebook                                        |
-| **Versioning**        | Git / GitHub                                            |
+- **Allowed Actions**:
+  - Trainees may share their work (e.g., queries, scripts, visualizations) publicly **only if** they anonymize the data and remove any sensitive information.
+  - Collaboration within the GitHub repository is encouraged.
 
-### 5.2 Architecture de la solution
-
-```mermaid
-graph TB
-    subgraph "Sources"
-        CSV[Fichiers CSV bruts]
-    end
-
-    subgraph "ETL Pipeline"
-        EXT[Extraction]
-        TRF[Transformation]
-        LOD[Chargement]
-    end
-
-    subgraph "Data Warehouse"
-        DW[(Star Schema)]
-    end
-
-    subgraph "Data Science"
-        EDA[Analyse Exploratoire]
-        RFM[Analyse RFM]
-        SEG[Segmentation K-Means]
-        CHR[Prédiction Churn]
-        CLV[Prédiction CLV]
-        REC[Recommandations]
-    end
-
-    subgraph "Restitution"
-        DASH[Dashboard Interactif]
-        RPT[Rapport PFE]
-    end
-
-    CSV --> EXT --> TRF --> LOD --> DW
-    DW --> EDA --> RFM
-    RFM --> SEG
-    RFM --> CHR
-    RFM --> CLV
-    DW --> REC
-    SEG --> DASH
-    CHR --> DASH
-    CLV --> DASH
-    REC --> DASH
-    DASH --> RPT
-```
-
-### 5.3 Structure du projet
-
-```
-dislog-pfe/
-├── Data/                    # Données brutes (CSV)
-├── notebooks/               # Jupyter notebooks par module
-│   ├── 01_data_profiling.ipynb
-│   ├── 02_eda.ipynb
-│   ├── 03_rfm_analysis.ipynb
-│   ├── 04_segmentation.ipynb
-│   ├── 05_churn_prediction.ipynb
-│   ├── 06_clv_model.ipynb
-│   └── 07_market_basket.ipynb
-├── src/                     # Modules Python réutilisables
-│   ├── config.py
-│   ├── etl/                 # Pipeline ETL
-│   ├── features/            # Feature engineering (RFM, CLV)
-│   ├── models/              # Modèles ML
-│   └── viz/                 # Fonctions de visualisation
-├── dashboard/               # Fichiers dashboard (Streamlit / Power BI)
-├── reports/                 # Rapport PFE et slides
-├── Schema.sql               # Schéma de la base de données
-├── requirements.txt         # Dépendances Python
-└── README.MD
-```
+- **Prohibited Actions**:
+  - Sharing raw data files or credentials.
+  - Publishing sensitive information about customers, sellers, or transactions.
 
 ---
 
-## 6. Planning Prévisionnel
+## **Analysis Subjects**
 
-```mermaid
-gantt
-    title Planning du Projet PFE
-    dateFormat  YYYY-MM-DD
-    axisFormat  %b %Y
-
-    section Phase 1 - ETL
-    Cahier de charge & Setup       :done, p0, 2026-03-01, 7d
-    Profiling des données          :p1a, after p0, 7d
-    Conception Data Warehouse      :p1b, after p1a, 7d
-    Pipeline ETL                   :p1c, after p1b, 14d
-
-    section Phase 2 - EDA
-    Analyse exploratoire           :p2a, after p1c, 14d
-    Feature Engineering RFM        :p2b, after p2a, 14d
-
-    section Phase 3 - ML
-    Segmentation (K-Means)         :p3a, after p2b, 14d
-    Prédiction du churn            :p3b, after p3a, 14d
-
-    section Phase 4 - CLV
-    Modèle CLV                     :p4a, after p3b, 14d
-    Tableaux de bord               :p4b, after p4a, 14d
-
-    section Phase 5 - Bonus
-    Market Basket Analysis         :p5a, after p4b, 10d
-    Système de recommandation      :p5b, after p5a, 10d
-
-    section Phase 6 - Rapport
-    Rédaction du rapport           :p6a, after p5b, 21d
-    Préparation soutenance         :p6b, after p6a, 14d
-```
-
-| Phase                              | Période         | Durée      | Livrables                             |
-| ---------------------------------- | --------------- | ---------- | ------------------------------------- |
-| **Phase 1** — Setup & ETL          | Mars 2026       | 5 semaines | Pipeline ETL, Data Warehouse alimenté |
-| **Phase 2** — EDA & RFM            | Avril 2026      | 4 semaines | Notebooks d'analyse, features RFM     |
-| **Phase 3** — ML Models            | Mai 2026        | 4 semaines | Modèles de segmentation et de churn   |
-| **Phase 4** — CLV & Dashboard      | Juin 2026       | 4 semaines | Modèle CLV, dashboard interactif      |
-| **Phase 5** — Recommandation       | Juil. 2026      | 3 semaines | Système de recommandation             |
-| **Phase 6** — Rapport & Soutenance | Juil.–Août 2026 | 5 semaines | Rapport PFE, slides, soutenance       |
+Below are several analysis subjects that trainees can work on. Each subject focuses on a specific aspect of the data and provides opportunities to practice SQL querying, data transformation, and visualization.
 
 ---
 
-## 7. Livrables
-
-| #   | Livrable                            | Format                | Date prévue  |
-| --- | ----------------------------------- | --------------------- | ------------ |
-| L1  | Cahier de charge                    | Document (.md / .pdf) | Mars 2026    |
-| L2  | Pipeline ETL fonctionnel            | Code Python           | Mars 2026    |
-| L3  | Notebooks d'analyse exploratoire    | Jupyter (.ipynb)      | Avril 2026   |
-| L4  | Modèle de segmentation client       | Code + résultats      | Mai 2026     |
-| L5  | Modèle de prédiction du churn       | Code + métriques      | Mai 2026     |
-| L6  | Modèle de CLV prédictive            | Code + résultats      | Juin 2026    |
-| L7  | Tableaux de bord interactifs        | Streamlit / Power BI  | Juin 2026    |
-| L8  | Système de recommandation _(bonus)_ | Code + résultats      | Juillet 2026 |
-| L9  | Rapport PFE                         | Document (.pdf)       | Août 2026    |
-| L10 | Présentation de soutenance          | Slides (.pptx)        | Août 2026    |
-| L11 | Code source complet                 | Dépôt GitHub          | Continu      |
-
----
-
-## 8. Contraintes et Risques
-
-### 8.1 Contraintes
-
-| Type                | Contrainte                                                                      |
-| ------------------- | ------------------------------------------------------------------------------- |
-| **Confidentialité** | Les données sont confidentielles ; toute publication doit être anonymisée       |
-| **Volume**          | Fichiers volumineux (~719 Mo pour SalesLine) nécessitant un traitement optimisé |
-| **Encodage**        | Certains fichiers en ANSI (cp1252) plutôt qu'UTF-8                              |
-| **Temps**           | Délai limité à 5-6 mois pour couvrir ETL + ML + Dashboard + Rapport             |
-
-### 8.2 Risques identifiés
-
-| Risque                                                         | Probabilité | Impact | Mitigation                                                                 |
-| -------------------------------------------------------------- | ----------- | ------ | -------------------------------------------------------------------------- |
-| Données de mauvaise qualité (valeurs manquantes, incohérences) | Moyenne     | Élevé  | Profiling approfondi dès la Phase 1, règles de nettoyage documentées       |
-| Performance insuffisante sur les gros volumes                  | Moyenne     | Moyen  | Utilisation de chunked processing, échantillonnage pour le Market Basket   |
-| Modèles ML avec faible performance prédictive                  | Faible      | Moyen  | Tester plusieurs algorithmes, optimiser les hyperparamètres                |
-| Retard sur le planning                                         | Moyenne     | Élevé  | Le système de recommandation est un bonus ; peut être réduit si nécessaire |
-| Problème d'accès à la base de données                          | Faible      | Élevé  | Solution de repli : SQLite en local                                        |
+### **Subject 1: Advanced Sales Performance Analysis**
+- **Objective**: Perform a multi-dimensional analysis of sales performance, incorporating time-series, geographic, and product-level insights.
+- **Tasks**:
+  1. **Sales Trends Over Time**:
+     - Analyze monthly, quarterly, and yearly sales trends.
+     - Identify seasonality patterns (e.g., peak sales months).
+  2. **Geographic Analysis**:
+     - Calculate total sales grouped by region and sector.
+     - Compare sales growth rates across regions and sectors over time.
+  3. **Top Performing Sellers**:
+     - Rank sellers based on total sales, average order value, and number of orders.
+     - Identify outliers (e.g., sellers with unusually high or low performance).
+  4. **Customer Retention**:
+     - Measure customer retention rates by analyzing repeat purchases over time.
+     - Segment customers into "New" and "Returning" based on their purchase history.
+  5. **Visualization**:
+     - Create dashboards showing sales trends, geographic distribution, and seller performance.
+     - Use tools like Power BI, Tableau, or Python libraries (Matplotlib/Seaborn) for visualization.
+- **Skills Practiced**:
+  - Time-series analysis (`DATEPART`, `DATEDIFF`).
+  - Aggregation and ranking (`SUM`, `GROUP BY`, `RANK`).
+  - Joins (`SalesHeader`, `Customer`, `Seller`, `Region`, `Sector`).
+  - Visualization and dashboard creation.
 
 ---
 
-## 9. Critères d'Acceptation
-
-| Module             | Critère de succès                                                      |
-| ------------------ | ---------------------------------------------------------------------- |
-| **ETL**            | 100% des données chargées sans perte ; intégrité référentielle validée |
-| **EDA**            | Notebooks reproductibles avec visualisations claires                   |
-| **Segmentation**   | Score de silhouette > 0.3 ; segments interprétables métier             |
-| **Churn**          | AUC-ROC > 0.70 ; Recall > 0.60 sur la classe churn                     |
-| **CLV**            | R² > 0.50 pour le modèle prédictif ; classement cohérent des clients   |
-| **Recommandation** | Top 10 règles d'association avec lift > 1.0                            |
-| **Dashboard**      | Toutes les vues fonctionnelles, données cohérentes avec les notebooks  |
-
----
-
-## 10. Annexes
-
-### A. Schéma de la base de données
-
-Le schéma en étoile se compose de :
-
-- **Tables de dimension** : Region, Sector, Customer, Seller, Product
-- **Tables de faits** : SalesHeader, SalesLine, Invoice
-
-Le fichier `Schema.sql` fourni par Dislog Group contient la définition complète des tables.
-
-### B. Glossaire
-
-| Terme           | Définition                                                    |
-| --------------- | ------------------------------------------------------------- |
-| **RFM**         | Recency, Frequency, Monetary — méthode de segmentation client |
-| **CLV**         | Customer Lifetime Value — valeur vie client                   |
-| **Churn**       | Perte d'un client (inactivité prolongée)                      |
-| **ETL**         | Extract, Transform, Load — pipeline de données                |
-| **K-Means**     | Algorithme de clustering par partitionnement                  |
-| **Apriori**     | Algorithme d'extraction de règles d'association               |
-| **AUC-ROC**     | Area Under the ROC Curve — métrique d'évaluation ML           |
-| **Star Schema** | Schéma en étoile pour le Data Warehousing                     |
-
-### C. Références bibliographiques
-
-- Fader, P.S. & Hardie, B.G.S. (2005). _"A Note on Deriving the BG/NBD Model"_
-- Agrawal, R. & Srikant, R. (1994). _"Fast Algorithms for Mining Association Rules"_
-- Hughes, A.M. (1994). _"Strategic Database Marketing"_ — Introduction de l'analyse RFM
-- Documentation Scikit-learn : https://scikit-learn.org/
-- Documentation mlxtend : https://rasbt.github.io/mlxtend/
+### **Subject 2: Customer Lifetime Value (CLV) and Segmentation**
+- **Objective**: Develop a comprehensive understanding of customer value and behavior using advanced segmentation techniques.
+- **Tasks**:
+  1. **Calculate CLV**:
+     - Define CLV as the total revenue generated by a customer over their lifetime.
+     - Use historical data to estimate future CLV (optional: apply predictive modeling).
+  2. **Segmentation**:
+     - Segment customers into tiers such as "High Value," "Medium Value," and "Low Value" based on CLV.
+     - Add behavioral dimensions such as purchase frequency, average order value, and recency of purchase (RFM analysis).
+  3. **Loyalty Analysis**:
+     - Identify loyal customers who consistently make purchases.
+     - Analyze the impact of loyalty programs (if applicable) on customer retention.
+  4. **Churn Prediction**:
+     - Predict which customers are at risk of churning based on their recent activity.
+     - Suggest strategies to re-engage these customers.
+  5. **Visualization**:
+     - Create a heatmap showing customer segments by region and sector.
+     - Build a Pareto chart to highlight the contribution of top customers to total revenue.
+- **Skills Practiced**:
+  - Statistical analysis (mean, median, standard deviation).
+  - RFM segmentation and clustering techniques.
+  - Predictive modeling (optional: regression, classification).
+  - Data visualization.
 
 ---
 
-> **Signatures**
+### **Subject 3: Product Profitability and Cross-Selling Analysis**
+- **Objective**: Evaluate product profitability and identify opportunities for cross-selling and upselling.
+- **Tasks**:
+  1. **Profitability Analysis**:
+     - Calculate gross profit for each product (revenue minus cost).
+     - Identify products with the highest and lowest profit margins.
+  2. **Cross-Selling Opportunities**:
+     - Analyze co-purchase patterns (e.g., products frequently bought together).
+     - Recommend cross-selling strategies based on these patterns.
+  3. **Product Bundling**:
+     - Identify complementary products that can be bundled for promotions.
+     - Evaluate the impact of bundling on sales and profitability.
+  4. **Promotion Effectiveness**:
+     - Analyze how promotions affect product profitability.
+     - Identify products where promotions significantly boost sales but reduce profitability.
+  5. **Visualization**:
+     - Create a scatter plot showing profitability vs. sales volume for each product.
+     - Build a network graph to visualize co-purchase relationships.
+- **Skills Practiced**:
+  - Joins (`SalesLine`, `Product`).
+  - Conditional filtering (`CASE` statements).
+  - Association rule mining (optional: Apriori algorithm).
+  - Visualization of product relationships.
 
-| Rôle                 | Nom             | Date       | Signature |
-| -------------------- | --------------- | ---------- | --------- |
-| Stagiaire            | _(à compléter)_ | ../../2026 |           |
-| Encadrant entreprise | _(à compléter)_ | ../../2026 |           |
-| Encadrant académique | _(à compléter)_ | ../../2026 |           |
+---
+
+### **Subject 4: Payment Behavior and Risk Analysis**
+- **Objective**: Analyze payment behavior and assess financial risks associated with delayed or missed payments.
+- **Tasks**:
+  1. **Payment Trends**:
+     - Analyze payment amounts and methods over time.
+     - Identify trends in payment method preferences (e.g., cash vs. credit card).
+  2. **Late Payments**:
+     - Identify invoices with delayed payments and calculate the average delay.
+     - Segment customers based on their payment punctuality.
+  3. **Risk Assessment**:
+     - Develop a risk score for customers based on payment history and outstanding balances.
+     - Predict the likelihood of payment defaults using historical data (optional: machine learning).
+  4. **Optimization**:
+     - Suggest improvements to payment terms or incentives to reduce delays.
+  5. **Visualization**:
+     - Create a bar chart showing payment method distribution.
+     - Build a heat map highlighting regions or sectors with high payment delays.
+- **Skills Practiced**:
+  - Date calculations (`DATEDIFF`).
+  - Aggregation and grouping.
+  - Predictive modeling (optional: logistic regression).
+  - Visualization of payment trends and risks.
+
+---
+
+### **Subject 5: Promotional Campaign Optimization**
+- **Objective**: Optimize promotional campaigns to maximize ROI and customer engagement.
+- **Tasks**:
+  1. **Campaign Performance**:
+     - Compare sales volumes and revenues for products with and without promotions.
+     - Evaluate the effectiveness of different promotion types (`promotype`) and values (`promovalue`).
+  2. **Customer Response**:
+     - Analyze how different customer segments respond to promotions.
+     - Identify segments that are most influenced by discounts.
+  3. **ROI Calculation**:
+     - Calculate the return on investment (ROI) for each promotion type.
+     - Identify promotions with negative ROI and suggest alternatives.
+  4. **Recommendations**:
+     - Propose changes to the promotional strategy based on findings.
+     - Design targeted campaigns for specific customer segments.
+  5. **Visualization**:
+     - Create a stacked bar chart comparing sales with and without promotions.
+     - Build a scatter plot showing ROI vs. promotion type.
+- **Skills Practiced**:
+  - Filtering and grouping by `promotype`.
+  - Calculating KPIs such as ROI and conversion rates.
+  - Writing actionable recommendations.
+
+---
+
+### **Subject 6: Market Basket Analysis and Recommendation Systems**
+- **Objective**: Perform market basket analysis to uncover hidden purchasing patterns and build a recommendation system.
+- **Tasks**:
+  1. **Association Rules**:
+     - Use association rule mining (e.g., Apriori algorithm) to identify frequently co-purchased items.
+     - Calculate metrics such as support, confidence, and lift.
+  2. **Recommendation System**:
+     - Build a collaborative filtering-based recommendation system to suggest products to customers.
+     - Alternatively, use content-based filtering based on product attributes.
+  3. **Impact Analysis**:
+     - Evaluate the potential impact of implementing these recommendations on sales.
+  4. **Visualization**:
+     - Create a network graph showing product relationships.
+     - Build a dashboard to display personalized recommendations for customers.
+- **Skills Practiced**:
+  - Association rule mining.
+  - Recommendation system algorithms (collaborative filtering, content-based filtering).
+  - Visualization of product relationships.
+
+---
+
+## **Getting Started**
+
+1. **Clone the Repository**:
+   ```bash
+   git clone https://github.com/og-disloggroup/dislog-group-it-trainees-program.git
+   cd data-analysis-training
+   ```
+
+2. **Download the Dataset**:
+   - Visit the [Google Drive Folder](https://drive.google.com/drive/folders/1gHgJSyr3DrrPCzMA5PZHGKpZejUjm47D).
+   - Download the dataset files and save them to the `data/` directory.
+
+3. **Set Up the Database**:
+   - Use the provided SQL scripts to create the database schema and populate it with sample data.
+   - Ensure you have access to a SQL Server instance or another compatible database system.
+
+4. **Choose a Subject**:
+   - Select one of the analysis subjects from the list above.
+   - Write SQL queries, perform transformations, and generate insights.
+
+5. **Visualize Results**:
+   - Use tools like Power BI, Tableau, or Python libraries (Matplotlib, Seaborn) to visualize your findings.
+
+---
+
+## **Collaboration Guidelines**
+
+1. **Adding New Trainees**:
+   - Add new trainees as collaborators to the repository.
+   - Provide them with access to the database and necessary credentials.
+
+2. **Branching Strategy**:
+   - Create a new branch for each trainee or subject.
+   - Example:
+     ```bash
+     git checkout -b oussama-dsg-i2tp.
+     ```
+
+3. **Commit Messages**:
+   - Use clear and descriptive commit messages.
+   - Example: `Add SQL queries for sales performance analysis`.
+
+4. **Pull Requests**:
+   - Submit pull requests for review before merging changes into the main branch.
+
+5. **Code Reviews**:
+   - Encourage peer reviews to ensure code quality and adherence to best practices.
+
+---
+
+## **Conclusion**
+
+This project is a valuable learning opportunity for trainees to gain hands-on experience with data warehousing and analysis. By working on these subjects, trainees will develop essential skills in SQL, data transformation, and visualization. Remember to respect data confidentiality and follow the guidelines outlined in this README.
+
+Happy analyzing! 🚀
