@@ -8,16 +8,14 @@
 | --------------------------- | ---------------------------------------------------------------------- |
 | **Titre du projet**         | Analyse de la Valeur Client, Segmentation et Système de Recommandation |
 | **Organisme d'accueil**     | Dislog Group                                                           |
-| **Domaine**                 | Data Science & AI                                  |
+| **Domaine**                 | Data Science & AI                                                      |
 | **Durée estimée**           | 5 à 6 mois                                                             |
-| **Date de début**           | fevrier 2026                                                              |
+| **Date de début**           | fevrier 2026                                                           |
 | **Date de fin prévue**      | june 2026                                                              |
 | **Encadrant(e) entreprise** | oussamaguemmar                                                         |
-| \_                          |
 | **Encadrant(e) académique** | Boutaina ETTETUANI                                                     |
-| \_                          |
-| **Stagiaire**               | Mohammed FAKIR \_                                                      |
-| **Établissement**           | IT \_                                                                  |
+| **Stagiaire**               | Mohammed FAKIR                                                         |
+| **Établissement**           | IT                                                                     |
 
 ---
 
