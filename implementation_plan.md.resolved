@@ -1,0 +1,318 @@
+# PFE: Customer Lifetime Value, Segmentation & Recommendation System
+
+## Overview
+
+Build a complete data science project for Dislog Group combining **Subject 2** (Customer Lifetime Value & Segmentation) with **Subject 6** (Market Basket Analysis & Recommendations) as a bonus chapter.
+
+**Data**: ~1GB of raw CSV files from Dislog (Region, Sector, Customer, Seller, Product, SalesHeader, SalesLine, Invoice).
+
+**Timeline**: 5-6 months (Feb → Jul/Aug 2026).
+
+---
+
+## User Review Required
+
+> [!IMPORTANT]
+> **Database Choice**: The provided [Schema.sql](file:///c:/Users/21261/Desktop/dislog-pfe/Schema.sql) targets SQL Server. Do you have SQL Server installed, or should we use **PostgreSQL** or **SQLite** instead? This affects the ETL pipeline setup.
+
+> [!IMPORTANT]
+> **Dashboard Tool**: Do you prefer **Power BI** (more corporate/polished) or **Streamlit** (Python-based, easier to code, interactive web app)? We can do both, but I'd like to know your priority.
+
+> [!IMPORTANT]
+> **Python Environment**: Do you want to use a virtual environment (`venv`) or **conda**? I see a `.venv` folder already exists.
+
+---
+
+## Project Structure
+
+```
+dislog-pfe/
+├── Data/                          # Raw CSV files (already present)
+├── notebooks/                     # Jupyter notebooks for each phase
+│   ├── 01_data_profiling.ipynb
+│   ├── 02_eda.ipynb
+│   ├── 03_rfm_analysis.ipynb
+│   ├── 04_segmentation.ipynb
+│   ├── 05_churn_prediction.ipynb
+│   ├── 06_clv_model.ipynb
+│   └── 07_market_basket.ipynb
+├── src/                           # Reusable Python modules
+│   ├── __init__.py
+│   ├── config.py                  # DB connection, file paths, constants
+│   ├── etl/
+│   │   ├── __init__.py
+│   │   ├── extract.py             # Read CSVs with encoding handling
+│   │   ├── transform.py           # Clean, deduplicate, type casting
+│   │   └── load.py                # Load into SQL database
+│   ├── features/
+│   │   ├── __init__.py
+│   │   ├── rfm.py                 # RFM feature engineering
+│   │   └── clv.py                 # CLV calculation
+│   ├── models/
+│   │   ├── __init__.py
+│   │   ├── segmentation.py        # K-Means, DBSCAN clustering
+│   │   ├── churn.py               # Churn prediction (XGBoost/RF)
+│   │   └── recommender.py         # Market basket & recommendations
+│   └── viz/
+│       ├── __init__.py
+│       └── plots.py               # Reusable plotting functions
+├── dashboard/                     # Streamlit or Power BI files
+├── reports/                       # Final PFE report, slides
+├── Schema.sql                     # Database schema (already present)
+├── requirements.txt               # Python dependencies
+├── README.MD                      # Project README (already present)
+└── .gitignore
+```
+
+---
+
+## Proposed Changes — Phase by Phase
+
+### Phase 1: Project Setup & ETL Pipeline (Month 1)
+
+This phase establishes the foundation. Everything else depends on clean, loaded data.
+
+---
+
+#### [NEW] [requirements.txt](file:///c:/Users/21261/Desktop/dislog-pfe/requirements.txt)
+
+Core dependencies:
+
+```
+pandas>=2.0
+numpy>=1.24
+scikit-learn>=1.3
+xgboost>=2.0
+matplotlib>=3.7
+seaborn>=0.12
+plotly>=5.15
+mlxtend>=0.23          # For Apriori / association rules
+sqlalchemy>=2.0
+pyodbc>=5.0            # For SQL Server (or psycopg2 for PostgreSQL)
+jupyter>=1.0
+streamlit>=1.28        # For dashboard (optional if using Power BI)
+scipy>=1.11
+```
+
+---
+
+#### [NEW] [src/config.py](file:///c:/Users/21261/Desktop/dislog-pfe/src/config.py)
+
+Central configuration:
+- Database connection string
+- File paths to raw CSVs
+- Constants (encoding `cp1252` for ANSI files, date formats)
+- Analysis reference date for RFM
+
+---
+
+#### [NEW] [src/etl/extract.py](file:///c:/Users/21261/Desktop/dislog-pfe/src/etl/extract.py)
+
+- Read each CSV with proper encoding (`cp1252` for SalesLine, Invoice; `utf-8` for others)
+- Handle large files with chunked reading (`chunksize` parameter in pandas)
+- Log row counts and basic stats during extraction
+
+---
+
+#### [NEW] [src/etl/transform.py](file:///c:/Users/21261/Desktop/dislog-pfe/src/etl/transform.py)
+
+- Clean column names (strip whitespace, lowercase)
+- Cast types: `saleid` → `int64`, dates → `datetime`, amounts → `float64`
+- Handle nulls: fill or drop based on business rules
+- Remove duplicates
+- Validate referential integrity (e.g., every `accountid` in SalesHeader exists in Customer)
+
+---
+
+#### [NEW] [src/etl/load.py](file:///c:/Users/21261/Desktop/dislog-pfe/src/etl/load.py)
+
+- Create database tables using the schema
+- Bulk insert cleaned data using SQLAlchemy + `to_sql()` with chunked inserts
+- Verify row counts match between CSV and database
+
+---
+
+#### [NEW] [notebooks/01_data_profiling.ipynb](file:///c:/Users/21261/Desktop/dislog-pfe/notebooks/01_data_profiling.ipynb)
+
+Initial data exploration notebook:
+- Load each CSV and display shape, dtypes, head, describe
+- Check for missing values, duplicates, outliers
+- Visualize distributions of key fields (amounts, dates, quantities)
+- Document data quality issues found
+
+---
+
+### Phase 2: EDA & Feature Engineering (Month 2)
+
+---
+
+#### [NEW] [notebooks/02_eda.ipynb](file:///c:/Users/21261/Desktop/dislog-pfe/notebooks/02_eda.ipynb)
+
+Deep exploratory analysis:
+- Sales trends over time (monthly/quarterly)
+- Revenue distribution by region, sector, brand
+- Customer purchase frequency distribution
+- Top customers, top products, top sellers
+- Correlation analysis between numerical fields
+
+---
+
+#### [NEW] [src/features/rfm.py](file:///c:/Users/21261/Desktop/dislog-pfe/src/features/rfm.py)
+
+RFM Feature Engineering module:
+- **Recency**: Days since last purchase (from reference date)
+- **Frequency**: Total number of orders per customer
+- **Monetary**: Total spend per customer
+- RFM scoring (1-5 scale for each dimension)
+- Composite RFM segment labels (e.g., "Champions", "At Risk", "Hibernating")
+
+---
+
+#### [NEW] [notebooks/03_rfm_analysis.ipynb](file:///c:/Users/21261/Desktop/dislog-pfe/notebooks/03_rfm_analysis.ipynb)
+
+- Compute RFM scores for all customers
+- Visualize RFM distributions (3D scatter, heatmaps)
+- Segment customers using RFM rules
+- Analyze segment sizes and revenue contribution
+
+---
+
+### Phase 3: ML Models — Segmentation & Churn (Month 3)
+
+---
+
+#### [NEW] [src/models/segmentation.py](file:///c:/Users/21261/Desktop/dislog-pfe/src/models/segmentation.py)
+
+Clustering module:
+- StandardScaler preprocessing
+- K-Means with Elbow method and Silhouette score for optimal `k`
+- DBSCAN as alternative for non-spherical clusters
+- PCA for 2D/3D visualization of clusters
+- Cluster profiling (mean RFM per cluster)
+
+---
+
+#### [NEW] [notebooks/04_segmentation.ipynb](file:///c:/Users/21261/Desktop/dislog-pfe/notebooks/04_segmentation.ipynb)
+
+- Run segmentation pipeline
+- Compare K-Means vs DBSCAN results
+- Visualize clusters with PCA
+- Business interpretation of each segment
+- Recommend strategies per segment (e.g., "re-engage At Risk customers with discounts")
+
+---
+
+#### [NEW] [src/models/churn.py](file:///c:/Users/21261/Desktop/dislog-pfe/src/models/churn.py)
+
+Churn prediction module:
+- Define churn label (e.g., no purchase in last 90 days)
+- Feature engineering for churn (recency, frequency, avg order value, days between orders)
+- Train/test split (80/20, stratified)
+- Models: Logistic Regression (baseline), Random Forest, XGBoost
+- Evaluation: Accuracy, Precision, Recall, F1, AUC-ROC
+- Feature importance analysis
+- SHAP values for model explainability (optional but impressive)
+
+---
+
+#### [NEW] [notebooks/05_churn_prediction.ipynb](file:///c:/Users/21261/Desktop/dislog-pfe/notebooks/05_churn_prediction.ipynb)
+
+- Build and compare churn models
+- Confusion matrix, ROC curve, precision-recall curve
+- Feature importance plots
+- Identify top at-risk customers
+
+---
+
+### Phase 4: CLV & Dashboards (Month 4)
+
+---
+
+#### [NEW] [src/features/clv.py](file:///c:/Users/21261/Desktop/dislog-pfe/src/features/clv.py)
+
+CLV calculation module:
+- **Historical CLV**: Total revenue per customer to date
+- **Predictive CLV**: Use BG/NBD + Gamma-Gamma model (via `lifetimes` library) OR simple regression
+- CLV tiers: High / Medium / Low value customers
+
+---
+
+#### [NEW] [notebooks/06_clv_model.ipynb](file:///c:/Users/21261/Desktop/dislog-pfe/notebooks/06_clv_model.ipynb)
+
+- Calculate historical and predicted CLV
+- Pareto chart (top 20% customers contributing 80% revenue)
+- CLV distribution by segment
+- Combine CLV with RFM segments for strategic matrix
+
+---
+
+#### [NEW] [dashboard/](file:///c:/Users/21261/Desktop/dislog-pfe/dashboard/)
+
+Interactive dashboard showing:
+- **Overview**: Total revenue, total customers, avg order value
+- **Segmentation view**: Customer segments with drill-down
+- **Churn alerts**: List of high-risk customers
+- **CLV ranking**: Top customers by predicted lifetime value
+- **Geographic view**: Performance by region/sector
+
+---
+
+### Phase 5: Bonus — Recommendation System (Month 4-5)
+
+---
+
+#### [NEW] [src/models/recommender.py](file:///c:/Users/21261/Desktop/dislog-pfe/src/models/recommender.py)
+
+Market basket & recommendations:
+- **Association rules**: Apriori algorithm on SalesLine data (product co-purchases per order)
+  - Use sampling or FP-Growth to handle the 719MB file efficiently
+  - Calculate support, confidence, lift
+- **Collaborative filtering**: User-item matrix → cosine similarity
+  - "Customers who bought X also bought Y"
+- Integration with customer segments: different recommendations per segment
+
+---
+
+#### [NEW] [notebooks/07_market_basket.ipynb](file:///c:/Users/21261/Desktop/dislog-pfe/notebooks/07_market_basket.ipynb)
+
+- Run Apriori on sampled transaction data
+- Display top association rules
+- Network graph of product relationships
+- Generate sample recommendations for specific customers
+
+---
+
+## Verification Plan
+
+### Automated Tests
+
+Since this is a data science/analysis project (not a software product), verification is primarily through data quality checks and model evaluation metrics rather than unit tests.
+
+**1. ETL Verification** (run in notebook or script):
+```bash
+python -c "from src.etl.extract import extract_all; extract_all()"
+```
+- Verify row counts: CSV rows == loaded DB rows
+- Verify no null primary keys
+- Verify referential integrity
+
+**2. Model Evaluation** (run in Jupyter notebooks):
+- Segmentation: Silhouette score > 0.3 indicates meaningful clusters
+- Churn: AUC-ROC > 0.7, report precision/recall/F1
+- CLV: R² score of regression model, visual inspection of predicted vs actual
+- Association rules: Top rules should have lift > 1.0
+
+### Manual Verification
+
+**1. Data Profiling Review**:
+- Open `notebooks/01_data_profiling.ipynb` and visually confirm data distributions make sense
+- Check for anomalies (negative amounts, future dates, etc.)
+
+**2. Dashboard Review**:
+- Run the Streamlit dashboard: `streamlit run dashboard/app.py`
+- Verify all charts load correctly and filters work
+- Check that numbers match the notebook outputs
+
+**3. Business Sense Check**:
+- Verify customer segments align with intuition (e.g., high-frequency buyers are in "Champions" segment)
+- Verify top product associations make sense (e.g., complementary products are recommended together)

@@ -1,0 +1,43 @@
+# Data Profiling — Walkthrough
+
+## What Was Done
+
+Explored all 8 raw CSV files from Dislog Group to understand data quality before building the ETL pipeline.
+
+## Dataset Summary
+
+| Table | Rows | Columns | Key Issues |
+|-------|------|---------|------------|
+| Region | 80 | 2 | 1 null row |
+| Sector | ~350 | 2 | Needs `cp1252` encoding (not utf-8) |
+| Customer | 87,668 | 4 | 11.8% missing names, 5 duplicates, whitespace in names |
+| Seller | 409 | 2 | Minor whitespace in 4 names |
+| Product | 2,319 | 4 | 70 brands, 3 missing brand values |
+| SalesHeader | **1,448,981** | 9 | Whitespace in 6 accountids |
+| SalesLine | **10,577,126** | 8 | 1,909 duplicates (0.02%), 4 promo types |
+| Invoice | **1,448,980** | 4 | Comma decimal separator in raw CSV |
+
+**Total: 13.5 million rows**
+
+## Key Findings
+
+- **Date range**: All 2024 data (Jan 1 → Dec 31), delivery up to Jan 22 2025
+- **Delimiter**: All CSVs use `;` (semicolon)
+- **Encoding**: Sector, SalesLine, Invoice need `cp1252`
+- **Promotions**: Discount (42%), Gift (32%), No Promotion (19%), Rebates (7%)
+- **Payment methods**: 3 codes — 1, 102, 205
+- **No negative amounts** in any financial columns
+- **1 delivery** dated before its order date
+
+## Issues to Fix in ETL
+
+1. Read **Sector.csv** with `cp1252` encoding
+2. Strip whitespace from `accountname`, `sellername`, `accountid`
+3. Handle 10,341 missing customer names (11.8%)
+4. Remove 5 duplicate customers and 1,909 duplicate sales lines
+5. Parse Invoice `paymentamount` with comma decimal separator
+6. Convert `saleid` to string consistently (it's treated as int64 in some files, object in others)
+
+## Full Report
+
+See [data_profiling_report.md](file:///c:/Users/21261/Desktop/dislog-pfe/notebooks/data_profiling_report.md)
