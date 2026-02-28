@@ -1,67 +1,86 @@
 """
-Central configuration for the Dislog PFE project.
-Database connection, file paths, and analysis constants.
+ETL configuration: paths, encodings, table map, and SQL Server connection.
+Single source of truth for the Dislog PFE star schema ETL.
 """
-
 import os
 from pathlib import Path
+from urllib.parse import quote_plus
 
-# ──────────────────────────────────────────
-# Paths
-# ──────────────────────────────────────────
+# Project root (parent of src/)
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+# Data directory: raw CSV files
 DATA_DIR = PROJECT_ROOT / "Data"
-NOTEBOOKS_DIR = PROJECT_ROOT / "notebooks"
+if not DATA_DIR.exists():
+    DATA_DIR = PROJECT_ROOT / "data"
 
-# ──────────────────────────────────────────
-# Raw CSV files
-# ──────────────────────────────────────────
-CSV_FILES = {
-    "region": DATA_DIR / "Region.csv",
-    "sector": DATA_DIR / "Sector.csv",
-    "customer": DATA_DIR / "Customer.csv",
-    "seller": DATA_DIR / "Seller.csv",
-    "product": DATA_DIR / "Products.csv",
-    "sales_header": DATA_DIR / "SalesHeader.csv",
-    "sales_line": DATA_DIR / "SalesLine.csv",
-    "invoice": DATA_DIR / "Invoice.csv",
+# CSV settings
+CSV_DELIMITER = ";"
+# Try utf-8 first; Sector, SalesLine, Invoice need cp1252 — try in order
+CSV_ENCODINGS = ("utf-8", "utf-8-sig", "cp1252")
+
+# Per-table encoding priority (optional): try cp1252 first for ANSI files
+TABLE_ENCODING_ORDER = {
+    "Sector": ("cp1252", "utf-8", "utf-8-sig"),
+    "SalesLine": ("cp1252", "utf-8", "utf-8-sig"),
+    "Invoice": ("cp1252", "utf-8", "utf-8-sig"),
 }
 
-# Files that use ANSI (cp1252) encoding instead of UTF-8
-ANSI_ENCODED_FILES = {"sales_line", "invoice"}
-
-# ──────────────────────────────────────────
-# Database (SQL Server)
-# ──────────────────────────────────────────
-DB_CONFIG = {
-    "driver": "{ODBC Driver 17 for SQL Server}",
-    "server": "localhost",       # Change if using a remote server
-    "database": "DislogPFE",
-    "trusted_connection": "yes", # Windows auth; set to "no" + add user/pass for SQL auth
+# CSV filename to logical table name
+TABLE_CSV_MAP = {
+    "Region": "Region.csv",
+    "Sector": "Sector.csv",
+    "Customer": "Customer.csv",
+    "Seller": "Seller.csv",
+    "Product": "Products.csv",
+    "SalesHeader": "SalesHeader.csv",
+    "SalesLine": "SalesLine.csv",
+    "Invoice": "Invoice.csv",
 }
 
-def get_connection_string():
-    """Build SQLAlchemy connection string for SQL Server."""
-    c = DB_CONFIG
-    conn = (
-        f"mssql+pyodbc://@{c['server']}/{c['database']}"
-        f"?driver={c['driver']}&trusted_connection={c['trusted_connection']}"
-    )
-    return conn
+# Order to load raw tables (for reference; star load order is in star_loader)
+LOAD_ORDER = ["Region", "Sector", "Customer", "Seller", "Product", "SalesHeader", "SalesLine", "Invoice"]
 
-def get_pyodbc_connection_string():
-    """Build raw pyodbc connection string."""
-    c = DB_CONFIG
-    return (
-        f"DRIVER={c['driver']};"
-        f"SERVER={c['server']};"
-        f"DATABASE={c['database']};"
-        f"Trusted_Connection={c['trusted_connection']};"
-    )
+# Output directory for cleaned CSVs (optional)
+CLEANED_DATA_DIR = DATA_DIR / "cleaned"
 
-# ──────────────────────────────────────────
-# Analysis constants
-# ──────────────────────────────────────────
-CHURN_THRESHOLD_DAYS = 90  # Customer inactive > 90 days = churned
-RFM_REFERENCE_DATE = None  # Set to None to use max date in data + 1 day
-CHUNK_SIZE = 50_000        # For reading large CSVs in chunks
+# Expected column counts per table (validation)
+EXPECTED_COLUMNS = {
+    "Region": 2,
+    "Sector": 2,
+    "Customer": 4,
+    "Seller": 2,
+    "Product": 4,
+    "SalesHeader": 9,
+    "SalesLine": 8,
+    "Invoice": 4,
+}
+
+
+def get_sqlserver_connection_string() -> str:
+    """
+    Build SQLAlchemy connection string for SQL Server.
+    Uses SQLSERVER_CONNECTION_STRING (ODBC-style) or SERVER/DATABASE/USERNAME/PASSWORD from env.
+    """
+    conn = os.getenv("SQLSERVER_CONNECTION_STRING", "").strip()
+    if conn:
+        if conn.startswith("odbc:") or (not conn.startswith("mssql+pyodbc://") and "Server=" in conn):
+            odbc_str = conn.removeprefix("odbc:").strip()
+            return f"mssql+pyodbc://?odbc_connect={quote_plus(odbc_str)}"
+        return conn
+    server = os.getenv("SQLSERVER_SERVER", "localhost\\SQLEXPRESS")
+    database = os.getenv("SQLSERVER_DATABASE", "DislogDWH")
+    username = os.getenv("SQLSERVER_USERNAME", "")
+    password = os.getenv("SQLSERVER_PASSWORD", "")
+    driver = os.getenv("SQLSERVER_DRIVER", "ODBC Driver 17 for SQL Server")
+    odbc_parts = [
+        f"Driver={{{driver}}}",
+        f"Server={server}",
+        f"Database={database}",
+    ]
+    if username and password:
+        odbc_parts.extend([f"UID={username}", f"PWD={password}"])
+    else:
+        odbc_parts.append("Trusted_Connection=yes")
+    odbc_parts.append("TrustServerCertificate=yes")
+    return f"mssql+pyodbc://?odbc_connect={quote_plus(';'.join(odbc_parts))}"
