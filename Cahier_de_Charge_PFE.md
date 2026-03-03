@@ -6,7 +6,7 @@
 
 | Élément                     | Détail                                                                 |
 | --------------------------- | ---------------------------------------------------------------------- |
-| **Titre du projet**         | Analyse de la Valeur Client, Segmentation et Système de Recommandation |
+| **Titre du projet**         | Analyse de la Valeur Client, Segmentation et (subject 6 : Système de Recommandation) |
 | **Organisme d'accueil**     | Dislog Group                                                           |
 | **Domaine**                 | Data Science & AI                                                      |
 | **Durée estimée**           | 5 à 6 mois                                                             |
