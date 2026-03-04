@@ -12,7 +12,7 @@
 | **Durée estimée**           | 5 à 6 mois                                                             |
 | **Date de début**           | fevrier 2026                                                           |
 | **Date de fin prévue**      | june 2026                                                              |
-| **Encadrant(e) entreprise** | oussamaguemmar                                                         |
+| **Encadrant(e) entreprise** | Oussama GUEMMAR                                                        |
 | **Encadrant(e) académique** | Boutaina ETTETUANI                                                     |
 | **Stagiaire**               | Mohammed FAKIR                                                         |
 | **Établissement**           | IT                                                                     |
