@@ -455,10 +455,3 @@ Le fichier `Schema.sql` fourni par Dislog Group contient la définition complèt
 
 ---
 
-> **Signatures**
-
-| Rôle                 | Nom             | Date       | Signature |
-| -------------------- | --------------- | ---------- | --------- |
-| Stagiaire            | _(à compléter)_ | ../../2026 |           |
-| Encadrant entreprise | _(à compléter)_ | ../../2026 |           |
-| Encadrant académique | _(à compléter)_ | ../../2026 |           |
