@@ -1,0 +1,168 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{enumitem}
+
+\title{\textbf{Phase 2 Report: EDA \& Feature Engineering}\\Dislog PFE --- CLV, Segmentation \& Recommendation System}
+\author{Dislog PFE Project}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This report summarizes the work completed in Phase 2 of the Dislog PFE project. Phase 2 covers exploratory data analysis (EDA) on the star-schema data warehouse, connection to SQL Server, profiling of all dimension and fact tables, construction of RFM (Recency, Frequency, Monetary) features, customer behavior analysis, statistical summaries and distributions, and visualizations. The work is implemented in the Jupyter notebook \texttt{02\_eda.ipynb} and uses the data loaded in Phase 1. The outputs support Phase 3 (segmentation and churn modeling) and Phase 4 (CLV and dashboards).
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+%------------------------------------------------------------------------------
+\section{Introduction}
+%------------------------------------------------------------------------------
+
+Phase 2 builds on the data warehouse delivered in Phase 1. The objective is to connect to the SQL Server star schema, explore all eight tables (six dimensions, two facts), derive actionable features---in particular \textbf{RFM} (Recency, Frequency, Monetary) for customer segmentation---and produce statistical summaries and visualizations that inform business decisions and downstream modeling.
+
+\textbf{Phase 2} focuses on:
+\begin{itemize}[noitemsep]
+  \item Setup and database connection; loading all star tables into the analysis environment
+  \item Exploratory data analysis on each table: shape, dtypes, samples, null counts, distinct key counts, date ranges, and FK sanity checks
+  \item Building RFM features and customer segments (e.g. Champions, At Risk, Hibernating)
+  \item Customer behavior analysis
+  \item Statistical summaries and distributions
+  \item Visualizations (charts and plots)
+\end{itemize}
+
+The main deliverable is the notebook \texttt{notebooks/02\_eda.ipynb}, which can be run with full fact tables or with sampled data to control memory usage.
+
+%------------------------------------------------------------------------------
+\section{Setup \& Data Loading}
+%------------------------------------------------------------------------------
+
+\subsection{Environment and Connection}
+
+The notebook adds the project root to \texttt{sys.path}, loads environment variables from \texttt{.env}, and uses \texttt{src.config.get\_sqlserver\_connection\_string()} to build a SQLAlchemy engine. Plotting defaults (matplotlib, seaborn) are set to match the profiling notebook (e.g. \texttt{seaborn-v0\_8-whitegrid}, figure size, font size).
+
+\subsection{Loading Star Tables}
+
+All eight star tables are loaded via \texttt{pd.read\_sql}:
+\begin{itemize}[noitemsep]
+  \item \textbf{Dimensions}: DimDate, DimCustomer, DimSeller, DimProduct, DimPromotion, DimPaymentMethod (full load).
+  \item \textbf{Facts}: FactSales ($\sim$9.2M rows) and FactInvoices ($\sim$1.4M rows).
+\end{itemize}
+
+To avoid \texttt{MemoryError} on machines with limited RAM, an option \texttt{USE\_FULL\_FACTS} is provided. When \texttt{False}, fact tables are loaded with \texttt{SELECT TOP (N)} (e.g. 500K for FactSales, 200K for FactInvoices). When \texttt{True}, the full tables are loaded; this is recommended only with sufficient free memory (e.g. 8GB+ for the notebook).
+
+%------------------------------------------------------------------------------
+\section{Exploratory Data Analysis on All Tables}
+%------------------------------------------------------------------------------
+
+For each dimension and fact table, the notebook performs:
+\begin{itemize}[noitemsep]
+  \item \textbf{Shape and dtypes}: Row and column counts; column types.
+  \item \textbf{Column overview}: Null counts and null percentages per column (with visual styling: green when no nulls, red when nulls exist).
+  \item \textbf{Sample rows}: First five rows in a formatted table.
+  \item \textbf{Numeric summary}: \texttt{describe()} for numeric columns.
+  \item \textbf{Key metrics (fact tables only)}: Distinct counts for important keys (e.g. distinct SaleID, CustomerKey for FactSales; distinct InvoiceID, CustomerKey for FactInvoices).
+\end{itemize}
+
+Styling is unified via two helper functions: \texttt{profile\_dataframe} for dimension tables and \texttt{profile\_fact\_table} for fact tables (with key-metric cards). Output is HTML with a blue banner, section labels, and consistent table formatting.
+
+\subsection{Date Ranges and FK Sanity}
+
+After profiling, the notebook checks:
+\begin{itemize}[noitemsep]
+  \item \textbf{OrderDateKey} and \textbf{PaymentDateKey} ranges (min/max) to confirm data is within expected calendar bounds (e.g. 2024).
+  \item \textbf{Referential integrity}: All CustomerKey values in FactSales and FactInvoices are verified to exist in DimCustomer (or a clear message is printed if not).
+\end{itemize}
+
+%------------------------------------------------------------------------------
+\section{RFM Features}
+%------------------------------------------------------------------------------
+
+RFM (Recency, Frequency, Monetary) is a standard framework for customer value and engagement. The notebook computes:
+
+\begin{itemize}[noitemsep]
+  \item \textbf{Recency}: Days since the customer's last order (or last payment). Lower values mean more recent activity.
+  \item \textbf{Frequency}: Number of transactions (e.g. distinct orders or invoices) per customer.
+  \item \textbf{Monetary}: Total amount spent (e.g. sum of line totals or payment amounts) per customer.
+\end{itemize}
+
+Aggregation is done at the customer level (CustomerKey). Reference date for recency is typically the maximum order or payment date in the dataset.
+
+\subsection{Quartiles and Segments}
+
+Each RFM dimension is split into quartiles (1--4). For Recency, quartile 4 is assigned to the most recent customers and 1 to the least recent. For Frequency and Monetary, higher quartiles indicate higher frequency and spend. A composite \textbf{RFM score} (e.g. string of quartile digits) and a \textbf{Segment} label are then assigned. Example segments include:
+\begin{itemize}[noitemsep]
+  \item \textbf{Champions}: High recency, frequency, and monetary (best customers).
+  \item \textbf{Loyal Customers}, \textbf{Potential Loyalists}, \textbf{At Risk}, \textbf{Hibernating}, etc., based on combinations of R, F, M quartiles.
+\end{itemize}
+
+The segment logic is implemented so that high R (e.g. 3--4), high F, and high M map to Champions; low R and low F often map to Hibernating or At Risk, depending on M.
+
+%------------------------------------------------------------------------------
+\section{Customer Behavior Analysis}
+%------------------------------------------------------------------------------
+
+Beyond RFM, the notebook may include:
+\begin{itemize}[noitemsep]
+  \item Aggregations by customer (e.g. average order value, number of distinct products, order frequency over time).
+  \item Time-based patterns: sales or invoices by month, quarter, or day of week.
+  \item Cross-tabulations or pivot tables linking segments to other dimensions (e.g. region, product category).
+\end{itemize}
+
+These analyses help interpret the RFM segments and prepare features for Phase 3 (clustering, churn prediction).
+
+%------------------------------------------------------------------------------
+\section{Statistical Summaries and Distributions}
+%------------------------------------------------------------------------------
+
+The notebook provides statistical summaries and distributions for key measures, for example:
+\begin{itemize}[noitemsep]
+  \item Central tendency and spread (mean, median, std, min, max) for numeric columns in fact tables (e.g. Quantity, LineTotalAmount, PaymentAmount).
+  \item Distribution of RFM values (e.g. histograms or box plots by segment).
+  \item Counts and proportions per segment or per dimension level.
+\end{itemize}
+
+These summaries support data quality checks and inform the choice of features and models in later phases.
+
+%------------------------------------------------------------------------------
+\section{Visualizations}
+%------------------------------------------------------------------------------
+
+Visualizations are produced with matplotlib and seaborn, aligned with the style set at the start of the notebook. Examples may include:
+\begin{itemize}[noitemsep]
+  \item Bar charts or histograms for segment sizes, sales by month, or top products.
+  \item Distributions of Recency, Frequency, and Monetary (e.g. histograms or KDE).
+  \item Heatmaps or grouped bar charts comparing segments along dimensions (e.g. region, payment method).
+\end{itemize}
+
+Figures are configured with clear titles, axis labels, and legends so that results can be used in reports or presentations.
+
+%------------------------------------------------------------------------------
+\section{Results and Deliverables}
+%------------------------------------------------------------------------------
+
+At the end of Phase 2:
+\begin{itemize}[noitemsep]
+  \item All star tables have been profiled with a consistent, styled format (column overview, samples, numeric summary; key metrics for facts).
+  \item RFM features and customer segments are computed and available for downstream use.
+  \item Customer behavior analysis and statistical summaries document patterns in the data.
+  \item Visualizations illustrate distributions, segments, and key KPIs.
+\end{itemize}
+
+The notebook \texttt{02\_eda.ipynb} is the single place for Phase 2 outputs; it can be re-run with full or sampled fact data depending on available RAM.
+
+%------------------------------------------------------------------------------
+\section{Conclusion}
+%------------------------------------------------------------------------------
+
+Phase 2 is complete. The data warehouse is explored, RFM features and segments are built, and customer behavior is analyzed with statistical summaries and visualizations. The results feed into Phase 3 (segmentation and churn modeling) and Phase 4 (CLV prediction and dashboards).
+
+\end{document}

@@ -1,0 +1,200 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{enumitem}
+
+\title{\textbf{Phase 1 Report: Project Setup \& ETL}\\Dislog PFE --- CLV, Segmentation \& Recommendation System}
+\author{Dislog PFE Project}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This report summarizes the work completed in Phase 1 of the Dislog PFE project. Phase 1 covers project setup, data profiling of raw CSV sources, design and implementation of a star-schema data warehouse, and a full ETL pipeline that extracts, cleans, and loads data into SQL Server. All dimension and fact tables are populated and validated. The pipeline includes data quality checks (nulls, duplicates, referential integrity) and a resume capability for partial loads.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+%------------------------------------------------------------------------------
+\section{Introduction}
+%------------------------------------------------------------------------------
+
+The project aims to build a \textbf{Customer Lifetime Value (CLV)}, \textbf{Segmentation}, and \textbf{Recommendation System} for Dislog. Data is sourced from raw CSV files (sales, customers, products, invoices, etc.) and must be integrated into a dedicated data warehouse for analytics and reporting.
+
+\textbf{Phase 1} focuses on:
+\begin{itemize}[noitemsep]
+  \item Project structure and environment setup
+  \item Data profiling to understand quality and structure of source files
+  \item Star schema design for the data warehouse
+  \item ETL pipeline: extract from CSV, transform (clean, validate), load into SQL Server
+  \item Data quality checks and validation
+\end{itemize}
+
+At the end of Phase 1, the data warehouse is fully populated and ready for downstream use.
+
+%------------------------------------------------------------------------------
+\section{Project Setup}
+%------------------------------------------------------------------------------
+
+\subsection{Structure}
+
+The project is organized as follows:
+\begin{itemize}[noitemsep]
+  \item \texttt{Data/}: Raw CSV files (Region, Sector, Customer, Seller, Products, SalesHeader, SalesLine, Invoice). Semicolon-delimited; some files use CP1252 encoding.
+  \item \texttt{notebooks/}: Jupyter notebooks for data profiling (\texttt{01\_data\_profiling.ipynb}).
+  \item \texttt{src/}: Main Python package. \texttt{src/config.py} holds paths, CSV settings, and SQL Server connection; \texttt{src/etl/} contains the full ETL pipeline.
+  \item \texttt{src/etl/cleaning/}: Subpackage for staging, validation, business rules, referential integrity, and metrics.
+  \item \texttt{reports/}: Output reports (this document).
+  \item \texttt{StarSchema.sql}, \texttt{Schema.sql}: Target and source schema definitions.
+\end{itemize}
+
+\subsection{Environment}
+
+A virtual environment is used with dependencies listed in \texttt{requirements.txt}: pandas, numpy, SQLAlchemy, pyodbc, python-dotenv, matplotlib, seaborn, scikit-learn, xgboost, jupyter, and others. Database connection is configured via a \texttt{.env} file (or environment variables): \texttt{SQLSERVER\_SERVER}, \texttt{SQLSERVER\_DATABASE}, and optionally \texttt{SQLSERVER\_USERNAME} / \texttt{SQLSERVER\_PASSWORD}.
+
+%------------------------------------------------------------------------------
+\section{Data Profiling}
+%------------------------------------------------------------------------------
+
+Before building the ETL, all eight raw CSV files were profiled to assess:
+\begin{itemize}[noitemsep]
+  \item Row and column counts, data types
+  \item Missing values and duplicate rows
+  \item Value distributions and key relationships
+  \item Encoding and delimiter issues (semicolon; CP1252 for Sector, SalesLine, Invoice)
+\end{itemize}
+
+Profiling was done in the Jupyter notebook \texttt{01\_data\_profiling.ipynb}, which loads each file, displays shape, dtypes, null counts, and basic visualizations. A separate script \texttt{data\_profiling.py} can generate a markdown report (\texttt{notebooks/data\_profiling_report.md}). Key findings included:
+\begin{itemize}[noitemsep]
+  \item Large volumes: SalesHeader (order of millions of rows), SalesLine (order of tens of millions), Invoice (order of millions).
+  \item Duplicates and nulls in key columns (e.g. \texttt{saleid}, \texttt{accountid}) requiring cleaning.
+  \item Referential integrity issues: some \texttt{accountid} / \texttt{sellerid} in SalesHeader not present in Customer/Seller; some \texttt{itemid} in SalesLine not in Product; some \texttt{salesid} in Invoice not in SalesHeader. The ETL handles these by mapping invalid FKs to an ``Unknown'' dimension row or dropping them according to configuration.
+\end{itemize}
+
+%------------------------------------------------------------------------------
+\section{Star Schema Design}
+%------------------------------------------------------------------------------
+
+The data warehouse follows a \textbf{star schema} implemented in SQL Server and defined in \texttt{StarSchema.sql}.
+
+\subsection{Dimension Tables (6)}
+
+\begin{itemize}[noitemsep]
+  \item \textbf{DimDate}: One row per calendar day. \texttt{DateKey} = YYYYMMDD (integer). Attributes: FullDate, Year, Quarter, Month, Day, DayOfWeek, DayName, MonthName, IsWeekend.
+  \item \textbf{DimCustomer}: Customers with AccountID, AccountName, RegionID, RegionDescription, SectorID, SectorDescription (and SCD2 fields ValidFrom, ValidTo, IsCurrent).
+  \item \textbf{DimSeller}: Sellers (SellerID, SellerName, SCD2 fields).
+  \item \textbf{DimProduct}: Products (ItemID, ProductName, NameAlias, Brand, SCD2 fields).
+  \item \textbf{DimPromotion}: Promotion types (PromoType) derived from SalesLine.
+  \item \textbf{DimPaymentMethod}: Payment method codes and descriptions from Invoice.
+\end{itemize}
+
+\subsection{Fact Tables (2)}
+
+\begin{itemize}[noitemsep]
+  \item \textbf{FactSales}: \textbf{Line-level} grain (one row per sales line). Keys: SaleID (degenerate), OrderDateKey, DeliveryDateKey, CustomerKey, SellerKey, ProductKey, PromotionKey. Measures: Quantity, UnitPrice, LineBruteAmount, LineDiscountAmount, LineNetAmount, LineTaxAmount, LineTotalAmount. Header-level amounts are obtained by aggregation to avoid double-counting.
+  \item \textbf{FactInvoices}: One row per invoice. Keys: InvoiceID (degenerate), SaleID, PaymentDateKey, CustomerKey, PaymentMethodKey. Measure: PaymentAmount.
+\end{itemize}
+
+%------------------------------------------------------------------------------
+\section{ETL Pipeline}
+%------------------------------------------------------------------------------
+
+The ETL is implemented in Python under \texttt{src/etl/}. High-level flow:
+
+\begin{enumerate}[noitemsep]
+  \item \textbf{Extract}: Read raw CSVs via \texttt{load\_csv.py} with encoding fallback and optional decimal-comma normalization.
+  \item \textbf{Transform (cleaning)}: For each entity, the cleaning package (\texttt{cleaning/}) runs: load and normalize column names; drop null keys; remove duplicate keys; apply business rules (e.g. quantity $>$ 0); enforce referential integrity (valid FKs or map to ``Unknown''); cast types for SQL Server.
+  \item \textbf{Load}: \texttt{star\_loader.py} truncates the star tables in reverse FK order, then loads DimDate (from a generated date dimension), DimPromotion, DimPaymentMethod, DimCustomer, DimSeller, DimProduct, FactSales, and FactInvoices. Inserts use chunked \texttt{to\_sql} (chunk size 100) to respect SQL Server's parameter limit; the engine uses \texttt{fast\_executemany=True} for performance.
+\end{enumerate}
+
+\subsection{Main Scripts}
+
+\begin{itemize}[noitemsep]
+  \item \texttt{python -m src.etl.run\_star\_etl}: Full ETL (clean all entities, truncate star schema, load all dimensions and facts).
+  \item \texttt{python -m src.etl.run\_cleaning}: Run only the cleaning pipeline and write cleaned DataFrames to \texttt{Data/cleaned/*.csv}.
+  \item \texttt{python -m src.etl.run\_star\_etl\_resume}: Load only \texttt{FactInvoices} using existing dimensions and (optionally) cleaned CSVs---used when a full ETL failed after FactSales.
+  \item \texttt{python -m src.etl.check\_db}: Connect to the database and print row counts for all eight star tables (validation).
+\end{itemize}
+
+\subsection{Technical Notes}
+
+\begin{itemize}[noitemsep]
+  \item Date dimension is built in \texttt{date\_dimension.py} from the min/max of order and delivery dates in SalesHeader.
+  \item FactSales is built by joining SalesLine to SalesHeader on \texttt{saleid}, then resolving all dimension keys via lookups and computing line-level measures from \texttt{httotalamount}, \texttt{ttctotalamount}, \texttt{promovalue}, etc.
+  \item FactInvoices uses a \textbf{dictionary-based lookup} from \texttt{salesid} to (accountid, orderdate) from SalesHeader instead of a pandas merge, to avoid memory blow-up when keys contain NaNs.
+\end{itemize}
+
+%------------------------------------------------------------------------------
+\section{Data Quality \& Validation}
+%------------------------------------------------------------------------------
+
+During cleaning, the pipeline:
+\begin{itemize}[noitemsep]
+  \item Drops rows with null primary or foreign key columns.
+  \item Removes duplicate rows (by business key; first occurrence kept).
+  \item Applies business rules (e.g. SalesLine \texttt{qty} $>$ 0).
+  \item Enforces referential integrity: invalid FKs are either mapped to an ``Unknown'' dimension row (e.g. unknown customer, unknown product) or dropped, depending on configuration. Dimensions are pre-loaded with one ``Unknown'' row where applicable.
+\end{itemize}
+
+Data quality metrics (row counts after each step, nulls, duplicates, RI violations) are logged by the cleaning pipeline. Final validation is done by running \texttt{check\_db} to confirm table row counts in the database.
+
+%------------------------------------------------------------------------------
+\section{Challenges \& Issues Encountered}
+%------------------------------------------------------------------------------
+
+Although Phase 1 is complete and stable, several non-trivial issues were encountered and influenced the final design:
+
+\subsection{SQL Server Parameter Limit (Chunk Size Error)}
+
+When first loading fact tables with \texttt{to\_sql}, the pipeline failed with an error related to SQL Server's limit on the number of parameters per batch (e.g. \texttt{The incoming request has too many parameters}). Inserting millions of rows in a single call exceeded this limit. The fix was to pass an explicit \textbf{chunksize} to \texttt{to\_sql}; a value of \textbf{100} was chosen so that each batch stays under the parameter cap while still allowing reasonable throughput. All dimension and fact loads in \texttt{star\_loader.py} now use \texttt{chunksize=100} (and \texttt{fast\_executemany=True} on the engine where supported) so that the ETL runs to completion without parameter-limit errors.
+
+\subsection{Very Long Load Time (Full ETL Duration)}
+
+Loading the full star schema---especially \textbf{FactSales} with approximately 9.2 million rows and \textbf{FactInvoices} with about 1.4 million rows---can take several hours (e.g. on the order of \textbf{6 hours}) on a typical development machine. This is due to the volume of data, chunked inserts, and key lookups. It is expected behavior for a full load; the resume script (\texttt{run\_star\_etl\_resume.py}) was introduced partly to avoid re-running this long load when only FactInvoices needs to be reloaded after a failure.
+
+\subsection{MemoryError in FactInvoices ETL Merge}
+
+The first implementation of \texttt{FactInvoices} used a pandas \texttt{merge} between the cleaned Invoice dataframe and SalesHeader on \texttt{salesid}. Because both sides contained rows with missing or invalid keys, the join generated a large Cartesian product, quickly exhausting RAM and raising \texttt{numpy.\_core.\_exceptions.\_ArrayMemoryError}. The fix was to replace the merge with a \textbf{dictionary-based lookup}: a compact mapping from \texttt{salesid} to (AccountID, OrderDateKey) is built in memory from SalesHeader, and each Invoice row looks up its customer and date via simple dict access. This removed the blow-up and made the FactInvoices load both faster and safer.
+
+\subsection{ETL Resume for FactInvoices Only}
+
+Because FactInvoices is the last and most sensitive step of the pipeline, a failure after loading FactSales previously required re-running the entire ETL (including all dimensions and FactSales). This was slow and risky for iteration. To address this, a dedicated script \texttt{run\_star\_etl\_resume.py} was added, together with helper functions in \texttt{star\_loader.py} that fetch existing dimension key lookups directly from SQL Server. This allows resuming the ETL by loading only FactInvoices while reusing already-loaded dimensions and FactSales.
+
+\subsection{Memory Pressure When Loading Large Fact Tables}
+
+Both raw SalesLine (in profiling) and FactSales (in SQL Server) contain tens of millions of rows. Attempting to load entire tables into memory on a machine with limited RAM (e.g. 12GB) can trigger \texttt{MemoryError}. For profiling, the mitigation was to use sample-based loading for the largest CSVs (e.g. load only 500K SalesLine rows while still counting total lines via a line count), so that the notebook runs without exhausting memory.
+
+\subsection{Encoding and Decimal Issues}
+
+Some CSVs (e.g. Sector, SalesLine, Invoice) are encoded in CP1252 rather than UTF-8, and monetary columns use a comma as decimal separator. Early attempts to load everything as UTF-8 with default decimal handling produced decoding errors and incorrect numeric parsing. The extractor now stores encoding per-file and normalizes decimals where needed, which is reflected in \texttt{load\_csv.py} and the profiling notebook.
+
+%------------------------------------------------------------------------------
+\section{Results}
+%------------------------------------------------------------------------------
+
+After a successful full ETL run:
+\begin{itemize}[noitemsep]
+  \item \textbf{DimDate}: One row per day in the data range (e.g. hundreds of rows).
+  \item \textbf{DimCustomer}: Tens of thousands of rows (cleaned from raw Customer; duplicates and null keys removed).
+  \item \textbf{DimSeller}, \textbf{DimProduct}, \textbf{DimPromotion}, \textbf{DimPaymentMethod}: Fully populated from cleaned sources.
+  \item \textbf{FactSales}: Approximately 9.2 million rows (line-level; cleaned from $\sim$10.5M raw lines after deduplication and RI).
+  \item \textbf{FactInvoices}: Approximately 1.4 million rows.
+\end{itemize}
+
+The database is fully loaded and validated, ready for downstream analytics and reporting.
+
+%------------------------------------------------------------------------------
+\section{Conclusion}
+%------------------------------------------------------------------------------
+
+Phase 1 is complete. The project has a clear structure, profiled raw data, a star-schema data warehouse in SQL Server, and a robust ETL pipeline with cleaning, referential integrity handling, and resume support. All dimension and fact tables are loaded and validated.
+
+\end{document}
