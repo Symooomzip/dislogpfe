@@ -146,6 +146,41 @@ Visualizations are produced with matplotlib and seaborn, aligned with the style 
 Figures are configured with clear titles, axis labels, and legends so that results can be used in reports or presentations.
 
 %------------------------------------------------------------------------------
+\section{Challenges \& Complexity in Phase 2}
+%------------------------------------------------------------------------------
+
+Although Phase 2 builds on a stable warehouse, several practical challenges and complexities were encountered:
+
+\subsection{Working With Very Large Fact Tables}
+
+FactSales ($\sim$9.2M rows) and FactInvoices ($\sim$1.4M rows) are large for interactive EDA in a notebook. Loading the full tables into pandas on a 12GB RAM machine is close to the memory limit and can raise \texttt{MemoryError} on some configurations. To manage this:
+\begin{itemize}[noitemsep]
+  \item The notebook exposes a \texttt{USE\_FULL\_FACTS} flag that controls whether the full facts or a sampled TOP $N$ subset are loaded.
+  \item Sampling still preserves the structure and distributions needed to prototype RFM and behavior analysis, while full-data runs can be reserved for high-memory environments and final checks.
+\end{itemize}
+
+\subsection{Performance of Aggregations and RFM Computation}
+
+Computing RFM features requires grouping millions of rows by CustomerKey and aggregating dates and monetary amounts. Naively written group-bys can be slow or memory-intensive. The notebook therefore:
+\begin{itemize}[noitemsep]
+  \item Uses compact group-by expressions that only keep the columns required for R, F, and M.
+  \item Reuses intermediate results instead of recomputing heavy aggregations multiple times.
+  \item Applies quartile cuts on pre-aggregated customer-level data, not on the raw fact tables.
+\end{itemize}
+
+These design choices keep execution time reasonable even when using the full fact tables.
+
+\subsection{Getting RFM Segmentation Rules Right}
+
+It is easy to misinterpret RFM quartiles (e.g. treating low Recency scores as ``better'' when the scale is inverted). During experimentation, the initial segment rules were refined so that:
+\begin{itemize}[noitemsep]
+  \item High Recency (recent activity), high Frequency, and high Monetary clearly map to ``Champions''.
+  \item Other segments such as ``Loyal'', ``At Risk'', and ``Hibernating'' follow consistent, business-meaningful thresholds.
+\end{itemize}
+
+Documenting these rules in the notebook ensures that later modeling phases can reuse the same segmentation logic without ambiguity.
+
+%------------------------------------------------------------------------------
 \section{Results and Deliverables}
 %------------------------------------------------------------------------------
 

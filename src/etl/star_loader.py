@@ -135,6 +135,12 @@ def load_dim_customer(
         "sectorid": "SectorID",
     })
     out = out.drop_duplicates(subset=["AccountID"])
+    out["AccountName"] = out.apply(
+        lambda r: f"CLIENT_{r['AccountID']}"
+        if pd.isna(r["AccountName"]) or str(r["AccountName"]).strip() in ("", "Unknown", "nan")
+        else r["AccountName"],
+        axis=1,
+    )
     out.to_sql("DimCustomer", engine, if_exists="append", index=False, method="multi", chunksize=CHUNKSIZE)
     with engine.connect() as conn:
         result = conn.execute(text("SELECT AccountID, CustomerKey FROM DimCustomer"))

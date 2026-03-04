@@ -121,6 +121,7 @@ The ETL is implemented in Python under \texttt{src/etl/}. High-level flow:
   \item \texttt{python -m src.etl.run\_star\_etl}: Full ETL (clean all entities, truncate star schema, load all dimensions and facts).
   \item \texttt{python -m src.etl.run\_cleaning}: Run only the cleaning pipeline and write cleaned DataFrames to \texttt{Data/cleaned/*.csv}.
   \item \texttt{python -m src.etl.run\_star\_etl\_resume}: Load only \texttt{FactInvoices} using existing dimensions and (optionally) cleaned CSVs---used when a full ETL failed after FactSales.
+  \item \texttt{python -m src.etl.reload\_dim\_customer}: Reload only \texttt{DimCustomer} with the \texttt{CLIENT\_\{AccountID\}} fix for anonymous customers; disables FK constraints on fact tables temporarily so FactSales and FactInvoices are not touched.
   \item \texttt{python -m src.etl.check\_db}: Connect to the database and print row counts for all eight star tables (validation).
 \end{itemize}
 
@@ -175,6 +176,10 @@ Both raw SalesLine (in profiling) and FactSales (in SQL Server) contain tens of 
 \subsection{Encoding and Decimal Issues}
 
 Some CSVs (e.g. Sector, SalesLine, Invoice) are encoded in CP1252 rather than UTF-8, and monetary columns use a comma as decimal separator. Early attempts to load everything as UTF-8 with default decimal handling produced decoding errors and incorrect numeric parsing. The extractor now stores encoding per-file and normalizes decimals where needed, which is reflected in \texttt{load\_csv.py} and the profiling notebook.
+
+\subsection{Anonymous Customers in DimCustomer}
+
+A significant number of customer records had missing or generic \texttt{AccountName} values (null, empty string, or ``Unknown''), which made reporting and EDA (e.g. top-customer charts) less meaningful. The fix was applied in two places. \textbf{(1) ETL logic}: In \texttt{star\_loader.py}, inside \texttt{load\_dim\_customer}, immediately after deduplication by \texttt{AccountID}, \texttt{AccountName} is now set to \texttt{CLIENT\_\{AccountID\}} whenever it is null, empty, ``Unknown'', or ``nan''; otherwise the original name is kept. This ensures every row in DimCustomer has a readable, unique label. \textbf{(2) Fixing existing data without reloading facts}: To correct a warehouse that was already loaded with the old logic, a dedicated script \texttt{reload\_dim\_customer.py} was added. It temporarily disables foreign-key constraints on \texttt{FactSales} and \texttt{FactInvoices}, deletes all rows from \texttt{DimCustomer}, runs the cleaning pipeline for Region, Sector, and Customer, then calls \texttt{load\_dim\_customer} (which now applies the \texttt{CLIENT\_} rule) and re-enables the constraints. Thus only DimCustomer is reloaded; the heavy fact tables (FactSales $\sim$9.2M rows, FactInvoices $\sim$1.4M rows) are left untouched. After running the script, roughly 10,342 customers show \texttt{AccountName} in the form \texttt{CLIENT\_\{AccountID\}} instead of null or ``Unknown''.
 
 %------------------------------------------------------------------------------
 \section{Results}
