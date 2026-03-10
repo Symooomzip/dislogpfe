@@ -1,0 +1,819 @@
+% ============================================================================
+%  Cahier de Charge — PFE Dislog
+%  Analyse de la Valeur Client, Segmentation & Système de Recommandation
+% ============================================================================
+\documentclass[11pt,a4paper]{article}
+
+% --- Encodage & langue ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+
+% --- Police moderne ---
+\usepackage{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+
+% --- Mise en page ---
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+\usepackage{parskip}
+\setlength{\parindent}{0pt}
+
+% --- Couleurs ---
+\usepackage[dvipsnames,svgnames,table]{xcolor}
+\definecolor{primary}{HTML}{1B4F72}
+\definecolor{accent}{HTML}{2E86C1}
+\definecolor{lightbg}{HTML}{EBF5FB}
+\definecolor{darktext}{HTML}{1C2833}
+\definecolor{graytext}{HTML}{566573}
+\definecolor{successgreen}{HTML}{1E8449}
+\definecolor{dangerred}{HTML}{C0392B}
+\definecolor{codebg}{HTML}{F4F6F7}
+\definecolor{warnyellow}{HTML}{7D6608}
+\definecolor{warnbg}{HTML}{FEF9E7}
+
+% --- Packages ---
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{float}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{titletoc}
+\usepackage{tcolorbox}
+\tcbuselibrary{skins,breakable}
+\usepackage{fontawesome5}
+\usepackage{tikz}
+\usepackage{pgfgantt}
+\usepackage{hyperref}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=primary,
+  urlcolor=accent,
+  pdfborder={0 0 0},
+}
+
+% --- Code inline ---
+\let\oldtexttt\texttt
+\renewcommand{\texttt}[1]{{\ttfamily\small\colorbox{codebg}{\textcolor{darktext}{#1}}}}
+
+% ============================================================================
+%  TITRES
+% ============================================================================
+\titleformat{\section}
+  {\color{primary}\LARGE\bfseries}{\thesection}{0.8em}{}
+  [\vspace{-4pt}{\color{accent}\titlerule[1.5pt]}]
+
+\titleformat{\subsection}
+  {\color{primary}\large\bfseries}{\thesubsection}{0.6em}{}
+
+\titleformat{\subsubsection}
+  {\color{accent}\normalsize\bfseries}{\thesubsubsection}{0.5em}{}
+
+% ============================================================================
+%  TABLE DES MATIÈRES
+% ============================================================================
+\contentsmargin{0cm}
+\titlecontents{section}[1.5em]
+  {\addvspace{10pt}\large\bfseries\color{primary}}
+  {\contentslabel{1.5em}}{}{\hfill\contentspage}
+\titlecontents{subsection}[3.8em]
+  {\addvspace{2pt}\color{darktext}}
+  {\contentslabel{2.3em}}{}{\titlerule*[0.5pc]{.}\contentspage}
+\titlecontents{subsubsection}[6.1em]
+  {\addvspace{1pt}\small\color{graytext}}
+  {\contentslabel{3em}}{}{\titlerule*[0.5pc]{.}\contentspage}
+
+% ============================================================================
+%  HEADER / FOOTER
+% ============================================================================
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{accent}\leaders\hrule height \headrulewidth\hfill}}
+\fancyhead[L]{\small\color{graytext}Cahier de Charge --- PFE Dislog}
+\fancyhead[R]{\small\color{graytext}Mohammed FAKIR --- 2026}
+\fancyfoot[C]{\color{accent}\thepage}
+
+% ============================================================================
+%  BOÎTES COLORÉES
+% ============================================================================
+\newtcolorbox{sectionbox}[1][]{
+  enhanced, breakable,
+  colback=lightbg, colframe=accent,
+  boxrule=0pt, leftrule=4pt,
+  arc=0pt, top=8pt, bottom=8pt, left=12pt, right=12pt,
+  fonttitle=\bfseries\color{primary}, title={#1},
+}
+\newtcolorbox{infobox}[1][]{
+  enhanced, breakable,
+  colback=lightbg, colframe=accent!60, boxrule=0.6pt, arc=3pt,
+  top=6pt, bottom=6pt, left=10pt, right=10pt,
+  fonttitle=\bfseries\small\color{primary},
+  title={\faIcon{info-circle}\hspace{6pt}#1},
+}
+\newtcolorbox{warnbox}[1][]{
+  enhanced, breakable,
+  colback=warnbg, colframe=warnyellow!70, boxrule=0.6pt, arc=3pt,
+  top=6pt, bottom=6pt, left=10pt, right=10pt,
+  fonttitle=\bfseries\small\color{warnyellow},
+  title={\faIcon{exclamation-triangle}\hspace{6pt}#1},
+}
+\newtcolorbox{successbox}[1][]{
+  enhanced, breakable,
+  colback=successgreen!5, colframe=successgreen!60, boxrule=0.6pt, arc=3pt,
+  top=6pt, bottom=6pt, left=10pt, right=10pt,
+  fonttitle=\bfseries\small\color{successgreen},
+  title={\faIcon{check-circle}\hspace{6pt}#1},
+}
+
+% ============================================================================
+\begin{document}
+
+% ============================================================================
+%  PAGE DE GARDE
+% ============================================================================
+\begin{titlepage}
+\newgeometry{margin=0cm}
+\begin{tikzpicture}[remember picture, overlay]
+  \fill[primary] (current page.north west) rectangle ([yshift=-8cm]current page.north east);
+  \fill[accent]  ([yshift=-8cm]current page.north west) rectangle ([yshift=-8.4cm]current page.north east);
+\end{tikzpicture}
+
+\vspace*{1.5cm}
+\begin{center}
+  {\fontsize{13}{15}\selectfont\color{white}\bfseries CAHIER DE CHARGE}\\[4pt]
+  {\fontsize{11}{13}\selectfont\color{white!80}Projet de Fin d'Études --- Data Science \& AI}\\[2.5cm]
+
+  {\fontsize{22}{28}\selectfont\color{white}\bfseries Analyse de la Valeur Client,}\\[6pt]
+  {\fontsize{22}{28}\selectfont\color{white}\bfseries Segmentation}\\[6pt]
+  {\fontsize{16}{20}\selectfont\color{white!90}\itshape \& Système de Recommandation (Bonus)}\\[4cm]
+
+  \begin{tabular}{r@{\hskip 14pt}l}
+    {\color{graytext}\small Stagiaire}               & {\color{darktext}\bfseries Mohammed FAKIR} \\[5pt]
+    {\color{graytext}\small Organisme d'accueil}      & {\color{darktext}\bfseries Dislog Group} \\[5pt]
+    {\color{graytext}\small Encadrant entreprise}     & {\color{darktext}\bfseries Oussama GUEMMAR} \\[5pt]
+    {\color{graytext}\small Encadrante académique}    & {\color{darktext}\bfseries Boutaina ETTETUANI} \\[5pt]
+    {\color{graytext}\small Établissement}            & {\color{darktext}\bfseries Mundiapolis University} \\[5pt]
+    {\color{graytext}\small Domaine}                  & {\color{darktext}\bfseries Data Science \& AI} \\[5pt]
+    {\color{graytext}\small Période}                  & {\color{darktext}\bfseries Février -- Août 2026} \\
+  \end{tabular}
+
+  \vfill
+  {\color{graytext}\small\itshape Document confidentiel --- Données anonymisées pour toute publication}
+\end{center}
+\restoregeometry
+\end{titlepage}
+
+% ============================================================================
+%  TABLE DES MATIÈRES
+% ============================================================================
+\newpage
+\thispagestyle{empty}
+\vspace*{1cm}
+\begin{center}
+  {\color{primary}\LARGE\bfseries Table des matières}\\[2pt]
+  {\color{accent}\rule{4cm}{1.5pt}}
+\end{center}
+\vspace{0.5cm}
+\tableofcontents
+\newpage
+
+% ============================================================================
+\section{Contexte du Projet}
+% ============================================================================
+
+\subsection{Présentation de l'organisme d'accueil}
+
+\textbf{Dislog Group} est un acteur majeur de la distribution et de la logistique au Maroc. Le groupe gère un large portefeuille de marques et assure la distribution de produits à travers tout le territoire national, couvrant plusieurs régions et secteurs d'activité.
+
+\subsection{Contexte et problématique}
+
+Dans un marché compétitif, la connaissance client constitue un levier stratégique essentiel. Dislog Group dispose d'un volume important de données transactionnelles (commandes, factures, clients, produits) mais n'exploite pas encore pleinement le potentiel de ces données pour :
+
+\begin{itemize}[noitemsep, leftmargin=1.5em]
+  \item \textbf{Comprendre la valeur réelle de chaque client} et identifier les clients les plus rentables.
+  \item \textbf{Anticiper le comportement client}, notamment le risque de perte (churn).
+  \item \textbf{Personnaliser les actions commerciales} en fonction des segments de clients.
+  \item \textbf{Découvrir les associations entre produits} pour optimiser les ventes croisées.
+\end{itemize}
+
+\subsection{Enjeux}
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\bfseries\color{primary}}p{3cm} X}
+\toprule
+\rowcolor{primary}
+\color{white}\bfseries Enjeu & \color{white}\bfseries Description \\
+\midrule
+Stratégique  & Mieux connaître les clients pour orienter la stratégie commerciale \\
+\rowcolor{lightbg}
+Opérationnel & Identifier les clients à risque de churn et agir de manière proactive \\
+Commercial   & Augmenter le panier moyen grâce aux recommandations de produits \\
+\rowcolor{lightbg}
+Décisionnel  & Fournir des tableaux de bord interactifs pour le pilotage de l'activité \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+% ============================================================================
+\section{Objectifs du Projet}
+% ============================================================================
+
+\subsection{Objectif principal}
+
+\begin{sectionbox}
+Développer une solution complète de Data Science permettant d'analyser la valeur client, segmenter la base clientèle, prédire le churn et proposer un système de recommandation de produits à partir des données transactionnelles de Dislog Group.
+\end{sectionbox}
+
+\subsection{Objectifs spécifiques}
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\bfseries\color{accent}}p{1cm} X X}
+\toprule
+\rowcolor{primary}
+\color{white}\bfseries \# & \color{white}\bfseries Objectif & \color{white}\bfseries Livrable attendu \\
+\midrule
+O1 & Concevoir et alimenter un Data Warehouse à partir des données brutes & Pipeline ETL fonctionnel + base de données structurée \\
+\rowcolor{lightbg}
+O2 & Réaliser une analyse exploratoire approfondie des données & Notebooks d'EDA avec visualisations \\
+O3 & Construire un modèle de segmentation client basé sur l'analyse RFM & Modèle de clustering + profils des segments \\
+\rowcolor{lightbg}
+O4 & Développer un modèle de prédiction du churn & Modèle ML évalué (précision, rappel, AUC-ROC) \\
+O5 & Calculer et prédire la valeur vie client (CLV) & Modèle prédictif de CLV + classement des clients \\
+\rowcolor{lightbg}
+O6 & Construire un système de recommandation \textit{(bonus)} & Moteur de recommandation basé sur Market Basket Analysis \\
+O7 & Créer des tableaux de bord interactifs & Dashboard de visualisation interactif \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+% ============================================================================
+\section{Périmètre du Projet}
+% ============================================================================
+
+\subsection{Périmètre fonctionnel}
+
+\begin{minipage}[t]{0.48\textwidth}
+\begin{successbox}[Inclus dans le périmètre]
+\begin{itemize}[noitemsep, leftmargin=1.2em]
+  \item Collecte, nettoyage et transformation des données brutes (CSV)
+  \item Conception d'un schéma en étoile (star schema)
+  \item Analyse exploratoire des données (EDA)
+  \item Segmentation client par analyse RFM et clustering
+  \item Modèle de prédiction du churn
+  \item Calcul et prédiction de la CLV
+  \item Analyse du panier d'achat (Market Basket Analysis)
+  \item Système de recommandation léger (filtrage collaboratif)
+  \item Tableaux de bord interactifs
+\end{itemize}
+\end{successbox}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.48\textwidth}
+\begin{tcolorbox}[
+  enhanced, breakable,
+  colback=dangerred!5, colframe=dangerred!50, boxrule=0.6pt, arc=3pt,
+  top=6pt, bottom=6pt, left=10pt, right=10pt,
+  fonttitle=\bfseries\small\color{dangerred},
+  title={\faIcon{times-circle}\hspace{6pt}Exclus du périmètre}
+]
+\begin{itemize}[noitemsep, leftmargin=1.2em]
+  \item Déploiement en production (stade prototype)
+  \item Intégration avec les systèmes internes de Dislog (ERP, CRM)
+  \item Traitement en temps réel (batch processing uniquement)
+  \item Application mobile
+\end{itemize}
+\end{tcolorbox}
+\end{minipage}
+
+\subsection{Périmètre des données}
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\bfseries}l X r}
+\toprule
+\rowcolor{primary}
+\color{white}\bfseries Table & \color{white}\bfseries Description & \color{white}\bfseries Volume estimé \\
+\midrule
+Region      & Référentiel des régions                                   & $\sim$2 Ko \\
+\rowcolor{lightbg}
+Sector      & Référentiel des secteurs                                  & $\sim$8 Ko \\
+Customer    & Base clients (accountid, nom, région, secteur)            & $\sim$4 Mo \\
+\rowcolor{lightbg}
+Seller      & Référentiel des vendeurs                                  & $\sim$9 Ko \\
+Product     & Catalogue produits (itemid, nom, marque)                  & $\sim$146 Ko \\
+\rowcolor{lightbg}
+SalesHeader & En-têtes des commandes (dates, montants)                  & $\sim$123 Mo \\
+SalesLine   & Détail des lignes de commande (produit, qté, prix, promo) & $\sim$719 Mo \\
+\rowcolor{lightbg}
+Invoice     & Factures (paiements, méthode de paiement)                 & $\sim$66 Mo \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{warnbox}[Confidentialité des données]
+Les données sont \textbf{confidentielles} et ne doivent en aucun cas être partagées publiquement. Toute publication doit être anonymisée.
+\end{warnbox}
+
+% ============================================================================
+\section{Description Fonctionnelle}
+% ============================================================================
+
+\subsection{Module 1 --- Pipeline ETL}
+
+\begin{center}
+\begin{tikzpicture}[
+  node distance=2.2cm, auto,
+  box/.style={rectangle, rounded corners=4pt, draw=accent, fill=lightbg,
+              text width=3cm, align=center, minimum height=1cm,
+              font=\small\bfseries\color{primary}},
+  db/.style={cylinder, shape border rotate=90, draw=accent, fill=lightbg,
+             minimum height=1.2cm, minimum width=2.5cm, align=center,
+             font=\small\bfseries\color{primary}},
+  arrow/.style={->, >=stealth, thick, color=accent}
+]
+  \node[box] (csv)  {Fichiers CSV bruts};
+  \node[box] (ext)  [right of=csv, xshift=0.5cm] {Extraction};
+  \node[box] (trf)  [right of=ext, xshift=0.5cm] {Nettoyage \& Validation};
+  \node[db]  (dw)   [right of=trf, xshift=1cm] {Data Warehouse};
+
+  \draw[arrow] (csv) -- node[above, font=\tiny\color{graytext}]{Python} (ext);
+  \draw[arrow] (ext) -- node[above, font=\tiny\color{graytext}]{Pandas} (trf);
+  \draw[arrow] (trf) -- node[above, font=\tiny\color{graytext}]{SQL Server} (dw);
+\end{tikzpicture}
+\end{center}
+
+\textbf{Fonctionnalités} :
+\begin{itemize}[noitemsep, leftmargin=1.5em]
+  \item Lecture des fichiers CSV avec gestion de l'encodage (ANSI/UTF-8)
+  \item Nettoyage : suppression des doublons, gestion des valeurs manquantes, typage
+  \item Validation : contrôle d'intégrité référentielle
+  \item Chargement en masse dans la base de données (chunksize=100, fast\_executemany)
+\end{itemize}
+
+\subsection{Module 2 --- Analyse Exploratoire (EDA)}
+
+\begin{itemize}[noitemsep, leftmargin=1.5em]
+  \item Distribution des ventes par période (mois, trimestre, année)
+  \item Répartition géographique du chiffre d'affaires (région, secteur)
+  \item Analyse des top clients, produits et vendeurs
+  \item Matrices de corrélation entre variables numériques
+\end{itemize}
+
+\subsection{Module 3 --- Segmentation Client}
+
+\textbf{Méthode} : Analyse RFM + Algorithmes de clustering
+
+\begin{center}
+\small
+\begin{tabular}{>{\bfseries\color{primary}}p{3.5cm} p{8cm}}
+\toprule
+\rowcolor{primary}
+\color{white}\bfseries Dimension RFM & \color{white}\bfseries Définition \\
+\midrule
+Recency (R)   & Nombre de jours depuis le dernier achat \\
+\rowcolor{lightbg}
+Frequency (F) & Nombre total de commandes \\
+Monetary (M)  & Montant total dépensé \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Algorithmes} :
+\begin{itemize}[noitemsep, leftmargin=1.5em]
+  \item \textbf{K-Means} : Segmentation en $k$ clusters avec optimisation par méthode du coude et score de silhouette
+  \item \textbf{DBSCAN} : Alternative pour détecter les clusters de formes non-sphériques
+  \item \textbf{PCA} : Réduction dimensionnelle pour la visualisation 2D/3D
+\end{itemize}
+
+\textbf{Segments attendus} :
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\bfseries}p{3.5cm} X X}
+\toprule
+\rowcolor{primary}
+\color{white}\bfseries Segment & \color{white}\bfseries Description & \color{white}\bfseries Action suggérée \\
+\midrule
+\faIcon{trophy} Champions        & Acheteurs fréquents, récents, à haute valeur & Programme de fidélité VIP \\
+\rowcolor{lightbg}
+\faIcon{gem} Clients fidèles    & Bonne fréquence, valeur moyenne-haute        & Offres de cross-selling \\
+\faIcon{seedling} Nouveaux      & Achat récent mais unique                     & Campagne de bienvenue \\
+\rowcolor{lightbg}
+\faIcon{exclamation} À risque   & Anciens bons clients devenus inactifs        & Campagne de réactivation \\
+\faIcon{moon} Dormants          & Aucune activité récente, faible valeur       & Enquête de satisfaction \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Module 4 --- Prédiction du Churn}
+
+\begin{infobox}[Définition du churn]
+Un client est considéré en churn s'il n'a effectué aucun achat au cours des \textbf{90 derniers jours} (seuil ajustable).
+\end{infobox}
+
+\textbf{Features utilisées} :
+
+\begin{center}
+\small
+\begin{tabular}{>{\ttfamily\small}p{5.5cm} p{8cm}}
+\toprule
+\rowcolor{primary}
+\color{white}\bfseries Feature & \color{white}\bfseries Description \\
+\midrule
+recency                 & Jours depuis le dernier achat \\
+\rowcolor{lightbg}
+frequency               & Nombre de commandes \\
+monetary                & Montant total dépensé \\
+\rowcolor{lightbg}
+avg\_order\_value         & Montant moyen par commande \\
+avg\_days\_between\_orders & Intervalle moyen entre commandes \\
+\rowcolor{lightbg}
+total\_products           & Nombre de produits distincts achetés \\
+region, sector          & Variables catégorielles (encodées) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Modèles envisagés} :
+
+\begin{center}
+\small
+\begin{tabular}{p{4.5cm} p{9cm}}
+\toprule
+\rowcolor{primary}
+\color{white}\bfseries Modèle & \color{white}\bfseries Rôle \\
+\midrule
+Régression Logistique & Baseline simple et interprétable \\
+\rowcolor{lightbg}
+Random Forest         & Bonne performance, résistant au surapprentissage \\
+XGBoost               & Performance état de l'art, feature importance \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Métriques d'évaluation} : Accuracy, Precision, Recall, F1-Score, AUC-ROC
+
+\subsection{Module 5 --- Valeur Vie Client (CLV)}
+
+\begin{enumerate}[noitemsep, leftmargin=1.5em]
+  \item \textbf{CLV historique} : Somme des revenus générés par client
+  \item \textbf{CLV prédictive} : Modèle BG/NBD + Gamma-Gamma (ou régression) pour estimer la valeur future
+  \item \textbf{Classification} : Clients en tiers High / Medium / Low value
+\end{enumerate}
+
+\textbf{Visualisations} : Diagramme de Pareto (80/20) --- Distribution de la CLV par segment --- Matrice CLV $\times$ Risque de churn
+
+\subsection{Module 6 --- Système de Recommandation \textit{(Bonus)}}
+
+\textbf{a) Market Basket Analysis} :
+\begin{itemize}[noitemsep, leftmargin=1.5em]
+  \item Algorithme Apriori / FP-Growth sur les co-achats par commande
+  \item Métriques : Support, Confiance, Lift
+  \item Identification des produits complémentaires
+\end{itemize}
+
+\textbf{b) Filtrage Collaboratif} :
+\begin{itemize}[noitemsep, leftmargin=1.5em]
+  \item Construction de la matrice Client $\times$ Produit
+  \item Similarité cosinus entre clients
+  \item Recommandation : \textit{"Les clients similaires à vous ont aussi acheté\ldots"}
+\end{itemize}
+
+\begin{infobox}[Note sur le volume]
+En raison du volume élevé de la table SalesLine ($\sim$719 Mo), l'analyse sera réalisée sur un échantillon représentatif ou via l'algorithme FP-Growth, plus efficace que Apriori.
+\end{infobox}
+
+\subsection{Module 7 --- Tableaux de Bord}
+
+Dashboard interactif présentant :
+\begin{itemize}[noitemsep, leftmargin=1.5em]
+  \item \textbf{Vue d'ensemble} : CA total, nombre de clients, panier moyen
+  \item \textbf{Vue segmentation} : Répartition et évolution des segments clients
+  \item \textbf{Vue churn} : Alertes sur les clients à risque
+  \item \textbf{Vue CLV} : Ranking des clients par valeur prédite
+  \item \textbf{Vue géographique} : Performance par région / secteur
+  \item \textbf{Vue recommandations} : Associations de produits les plus fréquentes
+\end{itemize}
+
+% ============================================================================
+\section{Architecture Technique}
+% ============================================================================
+
+\subsection{Stack technologique}
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\bfseries\color{primary}}p{3.5cm} X}
+\toprule
+\rowcolor{primary}
+\color{white}\bfseries Couche & \color{white}\bfseries Technologie \\
+\midrule
+Langage           & Python 3.11+ \\
+\rowcolor{lightbg}
+Données           & Pandas, NumPy \\
+Base de données   & SQL Server (ou SQLite/PostgreSQL selon disponibilité) \\
+\rowcolor{lightbg}
+Machine Learning  & Scikit-learn, XGBoost \\
+Association Rules & mlxtend (Apriori, FP-Growth) \\
+\rowcolor{lightbg}
+Visualisation     & Matplotlib, Seaborn, Plotly \\
+Dashboard         & Power BI et/ou Streamlit \\
+\rowcolor{lightbg}
+Notebooks         & Jupyter Notebook \\
+Versioning        & Git / GitHub \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Architecture de la solution (ROLAP)}
+
+\begin{center}
+\begin{tikzpicture}[
+  node distance=1.6cm,
+  box/.style={rectangle, rounded corners=4pt, draw=accent, fill=lightbg,
+              minimum width=3cm, minimum height=0.8cm, align=center,
+              font=\small\bfseries\color{primary}},
+  db/.style={cylinder, shape border rotate=90, draw=primary, fill=primary!10,
+             minimum height=1.1cm, minimum width=2.8cm, align=center,
+             font=\small\bfseries\color{primary}},
+  arrow/.style={->, >=stealth, thick, color=accent},
+  label/.style={font=\tiny\color{graytext}}
+]
+  \node[box]  (csv)  {CSV bruts};
+  \node[box]  (etl)  [right of=csv, xshift=1.2cm] {ETL Python};
+  \node[db]   (dw)   [right of=etl, xshift=1.4cm] {Star Schema\\SQL Server};
+  \node[box]  (ds)   [right of=dw,  xshift=1.4cm] {Data Science\\(RFM / ML)};
+  \node[box]  (pbi)  [right of=ds,  xshift=1.2cm] {Power BI\\(ROLAP)};
+
+  \draw[arrow] (csv) -- (etl);
+  \draw[arrow] (etl) -- (dw);
+  \draw[arrow] (dw)  -- (ds);
+  \draw[arrow] (ds)  -- (pbi);
+  \draw[arrow] (dw)  to[bend right=30] node[below, label]{requêtes SQL à la volée} (pbi);
+\end{tikzpicture}
+\end{center}
+
+\begin{infobox}[Architecture ROLAP]
+Le star schema SQL Server joue le rôle du \textbf{cube OLAP}. Power BI se connecte directement à SQL Server et génère les requêtes analytiques à la volée --- c'est la définition du \textbf{ROLAP}. Python remplace SSIS pour l'ETL, avec en plus la flexibilité nécessaire pour les phases ML.
+\end{infobox}
+
+\subsection{Structure du projet}
+
+\begin{tcolorbox}[
+  enhanced, colback=codebg, colframe=graytext!40,
+  boxrule=0.5pt, arc=3pt,
+  top=8pt, bottom=8pt, left=12pt, right=12pt,
+  fontupper=\ttfamily\small\color{darktext}
+]
+dislog-pfe/                                         \\
+\hspace*{1em}├── Data/          \hspace{2em}\textcolor{graytext}{\# Données brutes (CSV)}                  \\
+\hspace*{1em}├── notebooks/     \hspace{1.4em}\textcolor{graytext}{\# Jupyter notebooks par module}         \\
+\hspace*{2em}│~~ ├── 01\_data\_profiling.ipynb                                             \\
+\hspace*{2em}│~~ ├── 02\_eda.ipynb                                                         \\
+\hspace*{2em}│~~ ├── 03\_rfm\_analysis.ipynb                                               \\
+\hspace*{2em}│~~ ├── 04\_segmentation.ipynb                                                \\
+\hspace*{2em}│~~ ├── 05\_churn\_prediction.ipynb                                           \\
+\hspace*{2em}│~~ ├── 06\_clv\_model.ipynb                                                  \\
+\hspace*{2em}│~~ └── 07\_market\_basket.ipynb                                              \\
+\hspace*{1em}├── src/           \hspace{2em}\textcolor{graytext}{\# Modules Python réutilisables}           \\
+\hspace*{2em}│~~ ├── config.py                                                             \\
+\hspace*{2em}│~~ ├── etl/       \hspace{2em}\textcolor{graytext}{\# Pipeline ETL}                          \\
+\hspace*{2em}│~~ ├── features/  \hspace{1em}\textcolor{graytext}{\# Feature engineering (RFM, CLV)}        \\
+\hspace*{2em}│~~ ├── models/    \hspace{1.6em}\textcolor{graytext}{\# Modèles ML}                          \\
+\hspace*{2em}│~~ └── viz/       \hspace{2.2em}\textcolor{graytext}{\# Fonctions de visualisation}          \\
+\hspace*{1em}├── dashboard/     \hspace{1.2em}\textcolor{graytext}{\# Streamlit / Power BI}                 \\
+\hspace*{1em}├── reports/       \hspace{1.6em}\textcolor{graytext}{\# Rapports PFE et slides}               \\
+\hspace*{1em}├── StarSchema.sql                                                             \\
+\hspace*{1em}├── requirements.txt                                                           \\
+\hspace*{1em}└── README.md                                                                  \\
+\end{tcolorbox}
+
+% ============================================================================
+\section{Planning Prévisionnel}
+% ============================================================================
+
+\begin{center}
+\begin{ganttchart}[
+  hgrid, vgrid,
+  bar/.style={fill=accent!70, rounded corners=2pt},
+  bar done/.style={fill=successgreen!70, rounded corners=2pt},
+  bar label font=\small\color{darktext},
+  group label font=\small\bfseries\color{primary},
+  title label font=\small\bfseries\color{white},
+  title/.style={fill=primary, draw=none},
+  group/.style={fill=primary!20, draw=primary},
+  x unit=0.9cm,
+  y unit title=0.7cm,
+  y unit chart=0.65cm,
+  today=4,
+  today rule/.style={draw=dangerred, ultra thick},
+]{1}{20}
+
+  \gantttitle{Planning PFE 2026}{20} \\
+  \gantttitle{Mars}{4}
+  \gantttitle{Avr.}{4}
+  \gantttitle{Mai}{4}
+  \gantttitle{Juin}{4}
+  \gantttitle{Juil.}{4} \\
+
+  \ganttgroup{Phase 1 — ETL}{1}{4} \\
+  \ganttbar[bar done/.style={fill=successgreen!70}]{Setup \& Profiling}{1}{2} \\
+  \ganttbar[bar done/.style={fill=successgreen!70}]{Pipeline ETL}{2}{4} \\
+
+  \ganttgroup{Phase 2 — EDA}{5}{8} \\
+  \ganttbar[bar done/.style={fill=successgreen!70}]{Analyse exploratoire}{5}{6} \\
+  \ganttbar[bar done/.style={fill=successgreen!70}]{Feature Engineering RFM}{7}{8} \\
+
+  \ganttgroup{Phase 3 — ML}{9}{12} \\
+  \ganttbar{Segmentation K-Means}{9}{10} \\
+  \ganttbar{Prédiction du churn}{11}{12} \\
+
+  \ganttgroup{Phase 4 — CLV \& Dashboard}{13}{16} \\
+  \ganttbar{Modèle CLV}{13}{14} \\
+  \ganttbar{Tableaux de bord}{15}{16} \\
+
+  \ganttgroup{Phase 5 — Bonus}{17}{18} \\
+  \ganttbar{Market Basket \& Recommandation}{17}{18} \\
+
+  \ganttgroup{Phase 6 — Rapport}{19}{20} \\
+  \ganttbar{Rédaction \& Soutenance}{19}{20} \\
+\end{ganttchart}
+\end{center}
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{X p{2.8cm} p{2cm} X}
+\toprule
+\rowcolor{primary}
+\color{white}\bfseries Phase & \color{white}\bfseries Période & \color{white}\bfseries Durée & \color{white}\bfseries Livrables \\
+\midrule
+Phase 1 --- Setup \& ETL          & Mars 2026       & 5 semaines & Pipeline ETL, Data Warehouse alimenté \\
+\rowcolor{lightbg}
+Phase 2 --- EDA \& RFM            & Avril 2026      & 4 semaines & Notebooks d'analyse, features RFM \\
+Phase 3 --- ML Models             & Mai 2026        & 4 semaines & Modèles de segmentation et de churn \\
+\rowcolor{lightbg}
+Phase 4 --- CLV \& Dashboard      & Juin 2026       & 4 semaines & Modèle CLV, dashboard interactif \\
+Phase 5 --- Recommandation (bonus) & Juil. 2026     & 3 semaines & Système de recommandation \\
+\rowcolor{lightbg}
+Phase 6 --- Rapport \& Soutenance & Juil.--Août 2026 & 5 semaines & Rapport PFE, slides, soutenance \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+% ============================================================================
+\section{Livrables}
+% ============================================================================
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\bfseries\color{accent}}p{0.8cm} X p{3.5cm} p{2.5cm}}
+\toprule
+\rowcolor{primary}
+\color{white}\bfseries \# & \color{white}\bfseries Livrable & \color{white}\bfseries Format & \color{white}\bfseries Date prévue \\
+\midrule
+L1  & Cahier de charge                    & Document (.md / .pdf)    & Mars 2026 \\
+\rowcolor{lightbg}
+L2  & Pipeline ETL fonctionnel            & Code Python              & Mars 2026 \\
+L3  & Notebooks d'analyse exploratoire    & Jupyter (.ipynb)         & Avril 2026 \\
+\rowcolor{lightbg}
+L4  & Modèle de segmentation client       & Code + résultats         & Mai 2026 \\
+L5  & Modèle de prédiction du churn       & Code + métriques         & Mai 2026 \\
+\rowcolor{lightbg}
+L6  & Modèle de CLV prédictive            & Code + résultats         & Juin 2026 \\
+L7  & Tableaux de bord interactifs        & Streamlit / Power BI     & Juin 2026 \\
+\rowcolor{lightbg}
+L8  & Système de recommandation (bonus)   & Code + résultats         & Juillet 2026 \\
+L9  & Rapport PFE                         & Document (.pdf)          & Août 2026 \\
+\rowcolor{lightbg}
+L10 & Présentation de soutenance          & Slides (.pptx)           & Août 2026 \\
+L11 & Code source complet                 & Dépôt GitHub             & Continu \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+% ============================================================================
+\section{Contraintes et Risques}
+% ============================================================================
+
+\subsection{Contraintes}
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\bfseries\color{primary}}p{3cm} X}
+\toprule
+\rowcolor{primary}
+\color{white}\bfseries Type & \color{white}\bfseries Contrainte \\
+\midrule
+Confidentialité & Les données sont confidentielles ; toute publication doit être anonymisée \\
+\rowcolor{lightbg}
+Volume          & Fichiers volumineux ($\sim$719 Mo pour SalesLine) nécessitant un traitement optimisé \\
+Encodage        & Certains fichiers en ANSI (cp1252) plutôt qu'UTF-8 \\
+\rowcolor{lightbg}
+Temps           & Délai limité à 5--6 mois pour couvrir ETL + ML + Dashboard + Rapport \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Risques identifiés}
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{X p{2cm} p{1.5cm} X}
+\toprule
+\rowcolor{primary}
+\color{white}\bfseries Risque & \color{white}\bfseries Probabilité & \color{white}\bfseries Impact & \color{white}\bfseries Mitigation \\
+\midrule
+Données de mauvaise qualité (valeurs manquantes, incohérences) & Moyenne & Élevé & Profiling approfondi dès la Phase 1, règles de nettoyage documentées \\
+\rowcolor{lightbg}
+Performance insuffisante sur les gros volumes & Moyenne & Moyen & Chunked processing, échantillonnage pour le Market Basket \\
+Modèles ML avec faible performance prédictive & Faible & Moyen & Tester plusieurs algorithmes, optimiser les hyperparamètres \\
+\rowcolor{lightbg}
+Retard sur le planning & Moyenne & Élevé & Le système de recommandation est un bonus ; peut être réduit si nécessaire \\
+Problème d'accès à la base de données & Faible & Élevé & Solution de repli : SQLite en local \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+% ============================================================================
+\section{Critères d'Acceptation}
+% ============================================================================
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\bfseries\color{primary}}p{3cm} X}
+\toprule
+\rowcolor{primary}
+\color{white}\bfseries Module & \color{white}\bfseries Critère de succès \\
+\midrule
+ETL             & 100\% des données chargées sans perte ; intégrité référentielle validée \\
+\rowcolor{lightbg}
+EDA             & Notebooks reproductibles avec visualisations claires \\
+Segmentation    & Score de silhouette $>$ 0.3 ; segments interprétables métier \\
+\rowcolor{lightbg}
+Churn           & AUC-ROC $>$ 0.70 ; Recall $>$ 0.60 sur la classe churn \\
+CLV             & $R^2 >$ 0.50 pour le modèle prédictif ; classement cohérent des clients \\
+\rowcolor{lightbg}
+Recommandation  & Top 10 règles d'association avec lift $>$ 1.0 \\
+Dashboard       & Toutes les vues fonctionnelles, données cohérentes avec les notebooks \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+% ============================================================================
+\section*{Annexes}
+\addcontentsline{toc}{section}{Annexes}
+% ============================================================================
+
+\subsection*{A. Schéma de la base de données}
+
+Le data warehouse est implémenté en \textbf{schéma en étoile} dans SQL Server :
+
+\begin{itemize}[noitemsep, leftmargin=1.5em]
+  \item \textbf{Tables de dimension (6)} : DimDate, DimCustomer, DimSeller, DimProduct, DimPromotion, DimPaymentMethod
+  \item \textbf{Tables de faits (2)} : FactSales ($\sim$9,2M lignes), FactInvoices ($\sim$1,4M lignes)
+\end{itemize}
+
+Le fichier \texttt{StarSchema.sql} contient la définition complète des tables.
+
+\subsection*{B. Glossaire}
+
+\begin{center}
+\small
+\begin{tabular}{>{\bfseries\color{primary}}p{3.5cm} p{10cm}}
+\toprule
+\rowcolor{primary}
+\color{white}\bfseries Terme & \color{white}\bfseries Définition \\
+\midrule
+RFM         & Recency, Frequency, Monetary --- méthode de segmentation client \\
+\rowcolor{lightbg}
+CLV         & Customer Lifetime Value --- valeur vie client \\
+Churn       & Perte d'un client (inactivité prolongée) \\
+\rowcolor{lightbg}
+ETL         & Extract, Transform, Load --- pipeline de données \\
+ROLAP       & Relational OLAP --- cube analytique basé sur un schéma relationnel \\
+\rowcolor{lightbg}
+K-Means     & Algorithme de clustering par partitionnement \\
+Apriori     & Algorithme d'extraction de règles d'association \\
+\rowcolor{lightbg}
+AUC-ROC     & Area Under the ROC Curve --- métrique d'évaluation ML \\
+Star Schema & Schéma en étoile pour le Data Warehousing \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection*{C. Références bibliographiques}
+
+\begin{itemize}[noitemsep, leftmargin=1.5em]
+  \item Fader, P.S. \& Hardie, B.G.S. (2005). \textit{``A Note on Deriving the BG/NBD Model''}
+  \item Agrawal, R. \& Srikant, R. (1994). \textit{``Fast Algorithms for Mining Association Rules''}
+  \item Hughes, A.M. (1994). \textit{``Strategic Database Marketing''} --- Introduction de l'analyse RFM
+  \item Documentation Scikit-learn : \url{https://scikit-learn.org/}
+  \item Documentation mlxtend : \url{https://rasbt.github.io/mlxtend/}
+\end{itemize}
+
+\end{document}

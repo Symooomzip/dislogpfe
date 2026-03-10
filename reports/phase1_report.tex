@@ -1,205 +1,566 @@
+% ============================================================================
+%  Phase 1 Report — Professional Data-Science Style
+% ============================================================================
 \documentclass[11pt,a4paper]{article}
+
+% --- Encodage & langue ---
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage{lmodern}
+\usepackage[french]{babel}
+
+% --- Polices modernes ---
+\usepackage{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+
+% --- Mise en page ---
 \usepackage{geometry}
 \geometry{margin=2.5cm}
+\usepackage{parskip}
+\setlength{\parindent}{0pt}
+
+% --- Couleurs ---
+\usepackage[dvipsnames,svgnames,table]{xcolor}
+\definecolor{primary}{HTML}{1B4F72}
+\definecolor{accent}{HTML}{2E86C1}
+\definecolor{lightbg}{HTML}{EBF5FB}
+\definecolor{darktext}{HTML}{1C2833}
+\definecolor{graytext}{HTML}{566573}
+\definecolor{successgreen}{HTML}{1E8449}
+\definecolor{dangerred}{HTML}{C0392B}
+\definecolor{codebg}{HTML}{F4F6F7}
+
+% --- Packages graphiques ---
 \usepackage{graphicx}
 \usepackage{booktabs}
-\usepackage{hyperref}
+\usepackage{tabularx}
+\usepackage{float}
 \usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{titletoc}
+\usepackage{tcolorbox}
+\tcbuselibrary{skins,breakable}
+\usepackage{fontawesome5}
+\usepackage{tikz}
+\usepackage{hyperref}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=primary,
+  urlcolor=accent,
+  citecolor=primary,
+  pdfborder={0 0 0},
+}
 
-\title{\textbf{Phase 1 Report: Project Setup \& ETL}\\Dislog PFE --- CLV, Segmentation \& Recommendation System}
-\author{Dislog PFE Project}
-\date{\today}
+% --- Code inline ---
+\usepackage{listings}
+\lstset{
+  basicstyle=\ttfamily\small\color{darktext},
+  backgroundcolor=\color{codebg},
+  frame=single,
+  rulecolor=\color{graytext!30},
+  breaklines=true,
+  columns=fullflexible,
+}
+\let\oldtexttt\texttt
+\renewcommand{\texttt}[1]{{\ttfamily\small\colorbox{codebg}{\textcolor{darktext}{#1}}}}
 
+% ============================================================================
+%  SECTION / SUBSECTION STYLES
+% ============================================================================
+\titleformat{\section}
+  {\color{primary}\LARGE\bfseries}
+  {\thesection}{0.8em}{}
+  [\vspace{-4pt}{\color{accent}\titlerule[1.5pt]}]
+
+\titleformat{\subsection}
+  {\color{primary}\large\bfseries}
+  {\thesubsection}{0.6em}{}
+
+\titleformat{\subsubsection}
+  {\color{accent}\normalsize\bfseries}
+  {\thesubsubsection}{0.5em}{}
+
+% ============================================================================
+%  TABLE-OF-CONTENTS STYLE
+% ============================================================================
+\contentsmargin{0cm}
+\titlecontents{section}[1.5em]
+  {\addvspace{10pt}\large\bfseries\color{primary}}
+  {\contentslabel{1.5em}}{}
+  {\hfill\contentspage}
+
+\titlecontents{subsection}[3.8em]
+  {\addvspace{2pt}\color{darktext}}
+  {\contentslabel{2.3em}}{}
+  {\titlerule*[0.5pc]{.}\contentspage}
+
+\titlecontents{subsubsection}[6.1em]
+  {\addvspace{1pt}\small\color{graytext}}
+  {\contentslabel{3em}}{}
+  {\titlerule*[0.5pc]{.}\contentspage}
+
+% ============================================================================
+%  HEADER / FOOTER
+% ============================================================================
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{accent}\leaders\hrule height \headrulewidth\hfill}}
+\fancyhead[L]{\small\color{graytext}PFE Dislog --- Phase 1}
+\fancyhead[R]{\small\color{graytext}CLV, Segmentation \& Recommandation}
+\fancyfoot[C]{\color{accent}\thepage}
+
+% ============================================================================
+%  CUSTOM TCOLORBOXES
+% ============================================================================
+\newtcolorbox{sectionbox}[1][]{
+  enhanced, breakable,
+  colback=lightbg, colframe=accent,
+  boxrule=0pt, leftrule=4pt,
+  arc=0pt, outer arc=0pt,
+  top=8pt, bottom=8pt, left=12pt, right=12pt,
+  fonttitle=\bfseries\color{primary},
+  title={#1},
+  coltitle=primary,
+  attach boxed title to top left={yshift=-2mm, xshift=4mm},
+  boxed title style={colback=lightbg, colframe=lightbg, boxrule=0pt},
+}
+
+\newtcolorbox{infobox}[1][]{
+  enhanced, breakable,
+  colback=lightbg, colframe=accent!60,
+  boxrule=0.6pt,
+  arc=3pt, outer arc=3pt,
+  top=6pt, bottom=6pt, left=10pt, right=10pt,
+  fonttitle=\bfseries\small\color{primary},
+  title={\faIcon{info-circle}\hspace{6pt}#1},
+}
+
+\newtcolorbox{warnbox}[1][]{
+  enhanced, breakable,
+  colback=dangerred!5, colframe=dangerred!60,
+  boxrule=0.6pt,
+  arc=3pt, outer arc=3pt,
+  top=6pt, bottom=6pt, left=10pt, right=10pt,
+  fonttitle=\bfseries\small\color{dangerred},
+  title={\faIcon{exclamation-triangle}\hspace{6pt}#1},
+}
+
+\newtcolorbox{successbox}[1][]{
+  enhanced, breakable,
+  colback=successgreen!5, colframe=successgreen!60,
+  boxrule=0.6pt,
+  arc=3pt, outer arc=3pt,
+  top=6pt, bottom=6pt, left=10pt, right=10pt,
+  fonttitle=\bfseries\small\color{successgreen},
+  title={\faIcon{check-circle}\hspace{6pt}#1},
+}
+
+% ============================================================================
+%  TABLE STYLE (alternating rows)
+% ============================================================================
+\newcommand{\tableheadcolor}{\rowcolor{primary}}
+\newcommand{\tableheadfont}{\color{white}\bfseries}
+
+% ============================================================================
 \begin{document}
-\maketitle
 
-\begin{abstract}
-This report summarizes the work completed in Phase 1 of the Dislog PFE project. Phase 1 covers project setup, data profiling of raw CSV sources, design and implementation of a star-schema data warehouse, and a full ETL pipeline that extracts, cleans, and loads data into SQL Server. All dimension and fact tables are populated and validated. The pipeline includes data quality checks (nulls, duplicates, referential integrity) and a resume capability for partial loads.
-\end{abstract}
+% ============================================================================
+%  PAGE DE GARDE
+% ============================================================================
+\begin{titlepage}
+\newgeometry{margin=0cm}
+\begin{tikzpicture}[remember picture, overlay]
+  \fill[primary] (current page.north west) rectangle ([yshift=-8cm]current page.north east);
+  \fill[accent] ([yshift=-8cm]current page.north west) rectangle ([yshift=-8.4cm]current page.north east);
+\end{tikzpicture}
 
+\vspace*{1.5cm}
+\begin{center}
+  {\fontsize{14}{16}\selectfont\color{white}\bfseries PROJET DE FIN D'ÉTUDES}\\[6pt]
+  {\fontsize{11}{13}\selectfont\color{white!80}Dislog Group --- Data Science \& AI}\\[2.5cm]
+
+  {\fontsize{28}{34}\selectfont\color{white}\bfseries Rapport Phase 1}\\[10pt]
+  {\fontsize{16}{20}\selectfont\color{white!90} Mise en place du projet \& Pipeline ETL}\\[4.5cm]
+
+  {\fontsize{13}{16}\selectfont\color{darktext}\bfseries
+    Analyse de la Valeur Client, Segmentation\\
+    \& Système de Recommandation}\\[1.5cm]
+
+  \begin{tabular}{r@{\hskip 12pt}l}
+    {\color{graytext}\small Stagiaire}        & {\color{darktext}\bfseries Mohammed FAKIR} \\[4pt]
+    {\color{graytext}\small Encadrant entreprise} & {\color{darktext}\bfseries Oussama GUEMMAR} \\[4pt]
+    {\color{graytext}\small Encadrante académique}  & {\color{darktext}\bfseries Boutaina ETTETUANI} \\[4pt]
+    {\color{graytext}\small Établissement}    & {\color{darktext}\bfseries ENSA / IT} \\[4pt]
+    {\color{graytext}\small Date}             & {\color{darktext}\bfseries Mars 2026} \\
+  \end{tabular}
+
+  \vfill
+  {\color{graytext}\small\itshape Document confidentiel --- Données anonymisées}
+\end{center}
+\restoregeometry
+\end{titlepage}
+
+% ============================================================================
+%  TABLE DES MATIÈRES
+% ============================================================================
+\newpage
+\thispagestyle{empty}
+\vspace*{1cm}
+\begin{center}
+{\color{primary}\LARGE\bfseries Table des matières}\\[2pt]
+{\color{accent}\rule{4cm}{1.5pt}}
+\end{center}
+\vspace{0.5cm}
 \tableofcontents
 \newpage
 
-%------------------------------------------------------------------------------
+% ============================================================================
+%  RÉSUMÉ
+% ============================================================================
+\begin{sectionbox}[Résumé]
+Ce rapport résume les travaux réalisés lors de la \textbf{Phase 1} du projet PFE Dislog. Cette phase couvre la mise en place du projet, le profilage des fichiers CSV sources, la conception et l'implémentation d'un entrepôt de données en schéma en étoile, ainsi qu'un pipeline ETL complet qui extrait, nettoie et charge les données dans SQL Server. Toutes les tables de dimension et de faits sont alimentées et validées. Le pipeline intègre des contrôles de qualité des données (valeurs nulles, doublons, intégrité référentielle) ainsi qu'une capacité de reprise pour les chargements partiels.
+\end{sectionbox}
+
+% ============================================================================
 \section{Introduction}
-%------------------------------------------------------------------------------
+% ============================================================================
 
-The project aims to build a \textbf{Customer Lifetime Value (CLV)}, \textbf{Segmentation}, and \textbf{Recommendation System} for Dislog. Data is sourced from raw CSV files (sales, customers, products, invoices, etc.) and must be integrated into a dedicated data warehouse for analytics and reporting.
+Le projet vise à construire un système de \textbf{Customer Lifetime Value (CLV)}, de \textbf{Segmentation} et de \textbf{Recommandation} pour Dislog. Les données proviennent de fichiers CSV bruts (ventes, clients, produits, factures, etc.) et doivent être intégrées dans un entrepôt de données dédié pour l'analyse et le reporting.
 
-\textbf{Phase 1} focuses on:
-\begin{itemize}[noitemsep]
-  \item Project structure and environment setup
-  \item Data profiling to understand quality and structure of source files
-  \item Star schema design for the data warehouse
-  \item ETL pipeline: extract from CSV, transform (clean, validate), load into SQL Server
-  \item Data quality checks and validation
+\begin{infobox}[Périmètre de la Phase 1]
+\begin{itemize}[noitemsep,leftmargin=1.2em]
+  \item Structure du projet et mise en place de l'environnement
+  \item Profilage des données pour comprendre la qualité et la structure des fichiers sources
+  \item Conception du schéma en étoile pour l'entrepôt de données
+  \item Pipeline ETL : extraction depuis les CSV, transformation (nettoyage, validation), chargement dans SQL Server
+  \item Contrôles de qualité et validation des données
 \end{itemize}
+\end{infobox}
 
-At the end of Phase 1, the data warehouse is fully populated and ready for downstream use.
+À la fin de la Phase 1, l'entrepôt de données est entièrement alimenté et prêt pour les analyses en aval.
 
-%------------------------------------------------------------------------------
-\section{Project Setup}
-%------------------------------------------------------------------------------
+% ============================================================================
+\section{Mise en place du projet}
+% ============================================================================
 
 \subsection{Structure}
 
-The project is organized as follows:
-\begin{itemize}[noitemsep]
-  \item \texttt{Data/}: Raw CSV files (Region, Sector, Customer, Seller, Products, SalesHeader, SalesLine, Invoice). Semicolon-delimited; some files use CP1252 encoding.
-  \item \texttt{notebooks/}: Jupyter notebooks for data profiling (\texttt{01\_data\_profiling.ipynb}).
-  \item \texttt{src/}: Main Python package. \texttt{src/config.py} holds paths, CSV settings, and SQL Server connection; \texttt{src/etl/} contains the full ETL pipeline.
-  \item \texttt{src/etl/cleaning/}: Subpackage for staging, validation, business rules, referential integrity, and metrics.
-  \item \texttt{reports/}: Output reports (this document).
-  \item \texttt{StarSchema.sql}, \texttt{Schema.sql}: Target and source schema definitions.
+Le projet est organisé comme suit :
+\begin{itemize}[noitemsep,leftmargin=1.2em]
+  \item \texttt{Data/} --- Fichiers CSV bruts (Region, Sector, Customer, Seller, Products, SalesHeader, SalesLine, Invoice). Délimiteur point-virgule ; certains fichiers utilisent l'encodage CP1252.
+  \item \texttt{notebooks/} --- Notebooks Jupyter pour le profilage des données.
+  \item \texttt{src/} --- Package Python principal. \texttt{src/config.py} contient les chemins, les paramètres CSV et la connexion SQL Server ; \texttt{src/etl/} contient le pipeline ETL complet.
+  \item \texttt{src/etl/cleaning/} --- Sous-package pour le staging, la validation, les règles métier, l'intégrité référentielle et les métriques.
+  \item \texttt{reports/} --- Rapports de sortie (ce document).
+  \item \texttt{StarSchema.sql}, \texttt{Schema.sql} --- Définitions du schéma cible et du schéma source.
 \end{itemize}
 
-\subsection{Environment}
+\subsection{Environnement}
 
-A virtual environment is used with dependencies listed in \texttt{requirements.txt}: pandas, numpy, SQLAlchemy, pyodbc, python-dotenv, matplotlib, seaborn, scikit-learn, xgboost, jupyter, and others. Database connection is configured via a \texttt{.env} file (or environment variables): \texttt{SQLSERVER\_SERVER}, \texttt{SQLSERVER\_DATABASE}, and optionally \texttt{SQLSERVER\_USERNAME} / \texttt{SQLSERVER\_PASSWORD}.
+Un environnement virtuel est utilisé avec les dépendances listées dans \texttt{requirements.txt} : pandas, numpy, SQLAlchemy, pyodbc, python-dotenv, matplotlib, seaborn, scikit-learn, xgboost, jupyter, entre autres. La connexion à la base de données est configurée via un fichier \texttt{.env} (ou des variables d'environnement) : \texttt{SQLSERVER\_SERVER}, \texttt{SQLSERVER\_DATABASE}, et optionnellement \texttt{SQLSERVER\_USERNAME} / \texttt{SQLSERVER\_PASSWORD}.
 
-%------------------------------------------------------------------------------
-\section{Data Profiling}
-%------------------------------------------------------------------------------
+% ============================================================================
+\section{Profilage des données}
+% ============================================================================
 
-Before building the ETL, all eight raw CSV files were profiled to assess:
-\begin{itemize}[noitemsep]
-  \item Row and column counts, data types
-  \item Missing values and duplicate rows
-  \item Value distributions and key relationships
-  \item Encoding and delimiter issues (semicolon; CP1252 for Sector, SalesLine, Invoice)
+Avant la construction de l'ETL, les huit fichiers CSV bruts ont été profilés pour évaluer :
+\begin{itemize}[noitemsep,leftmargin=1.2em]
+  \item Le nombre de lignes et de colonnes, les types de données
+  \item Les valeurs manquantes et les lignes en doublon
+  \item Les distributions de valeurs et les relations entre clés
+  \item Les problèmes d'encodage et de délimiteur (point-virgule ; CP1252 pour Sector, SalesLine, Invoice)
 \end{itemize}
 
-Profiling was done in the Jupyter notebook \texttt{01\_data\_profiling.ipynb}, which loads each file, displays shape, dtypes, null counts, and basic visualizations. A separate script \texttt{data\_profiling.py} can generate a markdown report (\texttt{notebooks/data\_profiling_report.md}). Key findings included:
-\begin{itemize}[noitemsep]
-  \item Large volumes: SalesHeader (order of millions of rows), SalesLine (order of tens of millions), Invoice (order of millions).
-  \item Duplicates and nulls in key columns (e.g. \texttt{saleid}, \texttt{accountid}) requiring cleaning.
-  \item Referential integrity issues: some \texttt{accountid} / \texttt{sellerid} in SalesHeader not present in Customer/Seller; some \texttt{itemid} in SalesLine not in Product; some \texttt{salesid} in Invoice not in SalesHeader. The ETL handles these by mapping invalid FKs to an ``Unknown'' dimension row or dropping them according to configuration.
+Le profilage a été réalisé dans le notebook Jupyter \texttt{01\_data\_profiling.ipynb}, qui charge chaque fichier, affiche la forme, les types, les comptages de valeurs nulles et des visualisations de base. Un script séparé \texttt{data\_profiling.py} peut générer un rapport en markdown.
+
+\begin{warnbox}[Principaux constats du profilage]
+\begin{itemize}[noitemsep,leftmargin=1.2em]
+  \item Des volumes importants : SalesHeader (millions de lignes), SalesLine (dizaines de millions), Invoice (millions).
+  \item Des doublons et des valeurs nulles dans les colonnes clés (ex. \texttt{saleid}, \texttt{accountid}).
+  \item Des problèmes d'intégrité référentielle : certains \texttt{accountid}/\texttt{sellerid} dans SalesHeader absents de Customer/Seller ; certains \texttt{itemid} dans SalesLine absents de Product ; certains \texttt{salesid} dans Invoice absents de SalesHeader.
+\end{itemize}
+\end{warnbox}
+
+% ============================================================================
+\section{Conception du schéma en étoile}
+% ============================================================================
+
+L'entrepôt de données suit un \textbf{schéma en étoile} (star schema) implémenté dans SQL Server et défini dans \texttt{StarSchema.sql}. Cette section explique pourquoi ce modèle a été choisi et détaille chaque table.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{star_schema.png}
+\caption{Diagramme du schéma en étoile --- 6 dimensions autour de 2 tables de faits (FactSales et FactInvoices).}
+\label{fig:star-schema}
+\end{figure}
+
+\subsection{Pourquoi un schéma en étoile ?}
+
+\subsubsection{Limites du schéma transactionnel source}
+
+Les données brutes de Dislog sont organisées dans un schéma transactionnel classique (OLTP) avec 8 tables reliées entre elles. Ce schéma est \textbf{normalisé} (3NF) : chaque information est stockée une seule fois, sans redondance. C'est adapté aux opérations quotidiennes, mais \textbf{inadapté pour l'analyse} :
+
+\begin{itemize}[noitemsep,leftmargin=1.2em]
+  \item \textbf{Trop de jointures} : 5 à 6 tables par requête analytique.
+  \item \textbf{Pas de dimension temps} : pas de table calendrier dans le schéma source.
+  \item \textbf{Ambiguïté des mesures} : montants dans SalesHeader \textit{et} SalesLine --- risque de double comptage.
 \end{itemize}
 
-%------------------------------------------------------------------------------
-\section{Star Schema Design}
-%------------------------------------------------------------------------------
+\subsubsection{Principe du schéma en étoile}
 
-The data warehouse follows a \textbf{star schema} implemented in SQL Server and defined in \texttt{StarSchema.sql}.
+Le star schema est un modèle conçu pour l'analyse (OLAP), issu de la \textbf{méthodologie Kimball} :
 
-\subsection{Dimension Tables (6)}
-
-\begin{itemize}[noitemsep]
-  \item \textbf{DimDate}: One row per calendar day. \texttt{DateKey} = YYYYMMDD (integer). Attributes: FullDate, Year, Quarter, Month, Day, DayOfWeek, DayName, MonthName, IsWeekend.
-  \item \textbf{DimCustomer}: Customers with AccountID, AccountName, RegionID, RegionDescription, SectorID, SectorDescription (and SCD2 fields ValidFrom, ValidTo, IsCurrent).
-  \item \textbf{DimSeller}: Sellers (SellerID, SellerName, SCD2 fields).
-  \item \textbf{DimProduct}: Products (ItemID, ProductName, NameAlias, Brand, SCD2 fields).
-  \item \textbf{DimPromotion}: Promotion types (PromoType) derived from SalesLine.
-  \item \textbf{DimPaymentMethod}: Payment method codes and descriptions from Invoice.
+\begin{itemize}[noitemsep,leftmargin=1.2em]
+  \item \textbf{Au centre} : les tables de \textbf{faits} --- ce qu'on mesure (montants, quantités, paiements).
+  \item \textbf{Autour} : les tables de \textbf{dimensions} --- les axes d'analyse (qui, quoi, quand, où, comment).
 \end{itemize}
 
-\subsection{Fact Tables (2)}
+Visuellement, la table de faits centrale est entourée par les tables de dimension, formant une étoile. Chaque requête analytique ne nécessite qu'une jointure entre la table de faits et les dimensions pertinentes.
 
-\begin{itemize}[noitemsep]
-  \item \textbf{FactSales}: \textbf{Line-level} grain (one row per sales line). Keys: SaleID (degenerate), OrderDateKey, DeliveryDateKey, CustomerKey, SellerKey, ProductKey, PromotionKey. Measures: Quantity, UnitPrice, LineBruteAmount, LineDiscountAmount, LineNetAmount, LineTaxAmount, LineTotalAmount. Header-level amounts are obtained by aggregation to avoid double-counting.
-  \item \textbf{FactInvoices}: One row per invoice. Keys: InvoiceID (degenerate), SaleID, PaymentDateKey, CustomerKey, PaymentMethodKey. Measure: PaymentAmount.
+\subsubsection{Comparaison OLTP vs OLAP}
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\bfseries}p{4cm} X X}
+\toprule
+\tableheadcolor
+\tableheadfont Critère & \tableheadfont Schéma source (OLTP) & \tableheadfont Star Schema (OLAP) \\
+\midrule
+Objectif & Opérations quotidiennes & Analyse et reporting \\
+\rowcolor{lightbg}
+Jointures / requête & 5--6 tables & 2--3 tables \\
+Dimension temps & Absente & DimDate (jour, mois, trimestre, weekend) \\
+\rowcolor{lightbg}
+Redondance & Aucune (normalisé) & Volontaire (dénormalisé) \\
+Double comptage & Oui (en-tête vs ligne) & Non (mesures au niveau ligne) \\
+\rowcolor{lightbg}
+Historisation & Non & Oui (SCD Type 2) \\
+Performance & Lente & Rapide (clés entières, peu de jointures) \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Concepts clés du design}
+
+\subsubsection{Clés de substitution (Surrogate Keys)}
+
+Chaque table de dimension possède une clé primaire auto-incrémentée (\texttt{CustomerKey}, \texttt{ProductKey}, \texttt{SellerKey}, etc.) au lieu d'utiliser directement les clés naturelles des données source. Ce choix est motivé par :
+\begin{itemize}[noitemsep,leftmargin=1.2em]
+  \item Les clés naturelles peuvent changer, être longues ou avoir des formats hétérogènes.
+  \item Les clés entières permettent des jointures plus rapides.
+  \item Elles sont nécessaires pour supporter le SCD Type 2.
 \end{itemize}
 
-%------------------------------------------------------------------------------
-\section{ETL Pipeline}
-%------------------------------------------------------------------------------
+\subsubsection{Slowly Changing Dimension Type 2 (SCD2)}
 
-The ETL is implemented in Python under \texttt{src/etl/}. High-level flow:
+Les dimensions DimCustomer, DimSeller et DimProduct intègrent les champs \texttt{ValidFrom}, \texttt{ValidTo} et \texttt{IsCurrent}. Si un client change de région, on conserve les deux versions : l'ancienne (\texttt{IsCurrent=0}) et la nouvelle (\texttt{IsCurrent=1}). Les ventes passées restent associées à la bonne région historique.
 
-\begin{enumerate}[noitemsep]
-  \item \textbf{Extract}: Read raw CSVs via \texttt{load\_csv.py} with encoding fallback and optional decimal-comma normalization.
-  \item \textbf{Transform (cleaning)}: For each entity, the cleaning package (\texttt{cleaning/}) runs: load and normalize column names; drop null keys; remove duplicate keys; apply business rules (e.g. quantity $>$ 0); enforce referential integrity (valid FKs or map to ``Unknown''); cast types for SQL Server.
-  \item \textbf{Load}: \texttt{star\_loader.py} truncates the star tables in reverse FK order, then loads DimDate (from a generated date dimension), DimPromotion, DimPaymentMethod, DimCustomer, DimSeller, DimProduct, FactSales, and FactInvoices. Inserts use chunked \texttt{to\_sql} (chunk size 100) to respect SQL Server's parameter limit; the engine uses \texttt{fast\_executemany=True} for performance.
+\subsubsection{Dimensions dégénérées}
+
+\texttt{SaleID} dans FactSales et \texttt{InvoiceID} dans FactInvoices sont des \textbf{dimensions dégénérées} : des identifiants métier sans attributs propres, stockés directement dans la table de faits pour le regroupement.
+
+\subsection{Les 6 tables de dimension}
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\bfseries}l X X}
+\toprule
+\tableheadcolor
+\tableheadfont Dimension & \tableheadfont Rôle & \tableheadfont Origine \\
+\midrule
+DimDate & Analyser par jour, mois, trimestre, weekend & \textbf{Générée} (n'existait pas) \\
+\rowcolor{lightbg}
+DimCustomer & Analyser par client, région, secteur & Fusion Customer + Region + Sector \\
+DimSeller & Analyser par vendeur & Issue de Seller \\
+\rowcolor{lightbg}
+DimProduct & Analyser par produit, marque & Issue de Product \\
+DimPromotion & Analyser par type de promotion & Valeurs distinctes de SalesLine.promotype \\
+\rowcolor{lightbg}
+DimPaymentMethod & Analyser par méthode de paiement & Valeurs distinctes de Invoice.paymentmethod \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{infobox}[Points clés sur les dimensions]
+\textbf{DimDate} est \textbf{entièrement générée} : dans le schéma source, les dates ne sont que de simples colonnes. DimDate génère une ligne par jour avec tous les attributs temporels pré-calculés. La clé \texttt{DateKey} au format AAAAMMJJ (ex. 20240315) est un entier pour des jointures rapides.
+
+\textbf{DimCustomer} \textbf{dénormalise 3 tables en 1} : dans le source, il fallait joindre Customer $\to$ Region et Customer $\to$ Sector. Dans le star schema, tout est aplati dans une seule table --- de la redondance volontaire pour éviter des jointures.
+
+\textbf{DimPromotion} et \textbf{DimPaymentMethod} sont \textbf{extraites} de simples colonnes dans SalesLine et Invoice, isolées dans des dimensions dédiées pour normaliser ces attributs.
+\end{infobox}
+
+\subsection{Les 2 tables de faits}
+
+\subsubsection{FactSales --- les ventes ($\sim$9,2 millions de lignes)}
+
+Granularité : \textbf{une ligne par ligne de commande} (le niveau le plus fin). Cette table résulte de la jointure SalesHeader $\bowtie$ SalesLine sur \texttt{saleid}.
+
+\textbf{Pourquoi cette granularité ?} On peut toujours agréger vers le haut (par commande, par client, par mois) via des \texttt{GROUP BY}, mais on ne pourrait pas descendre plus bas si les données avaient été stockées au niveau commande.
+
+\textbf{Clés étrangères} (les branches de l'étoile) :
+\begin{itemize}[noitemsep,leftmargin=1.2em]
+  \item \texttt{OrderDateKey} $\to$ DimDate \hfill\textit{quand la commande a été passée}
+  \item \texttt{DeliveryDateKey} $\to$ DimDate \hfill\textit{quand elle a été livrée}
+  \item \texttt{CustomerKey} $\to$ DimCustomer \hfill\textit{qui a acheté}
+  \item \texttt{SellerKey} $\to$ DimSeller \hfill\textit{qui a vendu}
+  \item \texttt{ProductKey} $\to$ DimProduct \hfill\textit{quel produit}
+  \item \texttt{PromotionKey} $\to$ DimPromotion \hfill\textit{quelle promotion}
+\end{itemize}
+
+\textbf{Mesures} : Quantity, UnitPrice, LineBruteAmount, LineDiscountAmount, LineNetAmount, LineTaxAmount, LineTotalAmount. Toutes au \textbf{niveau ligne uniquement} pour éliminer le double comptage.
+
+\subsubsection{FactInvoices --- les paiements ($\sim$1,4 million de lignes)}
+
+Granularité : \textbf{une ligne par facture}. Table séparée car les factures ont un \textbf{grain différent} des ventes : date de paiement $\neq$ date de commande, méthode de paiement propre, et une commande peut avoir 0, 1 ou plusieurs factures.
+
+\textbf{Clés étrangères} : PaymentDateKey $\to$ DimDate, CustomerKey $\to$ DimCustomer, PaymentMethodKey $\to$ DimPaymentMethod.
+
+\textbf{Mesure} : PaymentAmount.
+
+% ============================================================================
+\section{Pipeline ETL}
+% ============================================================================
+
+L'ETL est implémenté en Python sous \texttt{src/etl/}. Flux principal :
+
+\begin{enumerate}[noitemsep,leftmargin=1.2em]
+  \item \textbf{\color{accent}Extraction} --- Lecture des CSV bruts via \texttt{load\_csv.py} avec repli d'encodage et normalisation optionnelle de la virgule décimale.
+  \item \textbf{\color{accent}Transformation} --- Pour chaque entité, le package \texttt{cleaning/} exécute : normalisation des noms de colonnes, suppression des clés nulles et doublons, application des règles métier (ex. quantité $>$ 0), vérification de l'intégrité référentielle (mapping vers << Unknown >> ou suppression), conversion des types pour SQL Server.
+  \item \textbf{\color{accent}Chargement} --- \texttt{star\_loader.py} vide les tables dans l'ordre inverse des FK, puis charge les 6 dimensions et les 2 faits. Insertions par lots (\texttt{chunksize=100}) avec \texttt{fast\_executemany=True}.
 \end{enumerate}
 
-\subsection{Main Scripts}
+\subsection{Scripts principaux}
 
-\begin{itemize}[noitemsep]
-  \item \texttt{python -m src.etl.run\_star\_etl}: Full ETL (clean all entities, truncate star schema, load all dimensions and facts).
-  \item \texttt{python -m src.etl.run\_cleaning}: Run only the cleaning pipeline and write cleaned DataFrames to \texttt{Data/cleaned/*.csv}.
-  \item \texttt{python -m src.etl.run\_star\_etl\_resume}: Load only \texttt{FactInvoices} using existing dimensions and (optionally) cleaned CSVs---used when a full ETL failed after FactSales.
-  \item \texttt{python -m src.etl.reload\_dim\_customer}: Reload only \texttt{DimCustomer} with the \texttt{CLIENT\_\{AccountID\}} fix for anonymous customers; disables FK constraints on fact tables temporarily so FactSales and FactInvoices are not touched.
-  \item \texttt{python -m src.etl.check\_db}: Connect to the database and print row counts for all eight star tables (validation).
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\ttfamily\small}p{6.5cm} X}
+\toprule
+\tableheadcolor
+\tableheadfont Commande & \tableheadfont Description \\
+\midrule
+python -m src.etl.run\_star\_etl & ETL complet (nettoyage + chargement de toutes les tables) \\
+\rowcolor{lightbg}
+python -m src.etl.run\_cleaning & Pipeline de nettoyage seul $\to$ CSV nettoyés \\
+python -m src.etl.run\_star\_etl\_resume & Reprise : chargement de FactInvoices uniquement \\
+\rowcolor{lightbg}
+python -m src.etl.reload\_dim\_customer & Rechargement de DimCustomer avec correction CLIENT\_ \\
+python -m src.etl.check\_db & Validation : affiche les row counts de chaque table \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Notes techniques}
+
+\begin{itemize}[noitemsep,leftmargin=1.2em]
+  \item La dimension date est construite dans \texttt{date\_dimension.py} à partir des dates min/max de commande et de livraison de SalesHeader.
+  \item FactSales est construit en joignant SalesLine à SalesHeader sur \texttt{saleid}, puis en résolvant toutes les clés de dimension via des lookups et en calculant les mesures au niveau ligne.
+  \item FactInvoices utilise un \textbf{lookup basé sur un dictionnaire} de \texttt{salesid} vers (accountid, orderdate) depuis SalesHeader au lieu d'un merge pandas, afin d'éviter l'explosion mémoire.
 \end{itemize}
 
-\subsection{Technical Notes}
+% ============================================================================
+\section{Qualité des données \& Validation}
+% ============================================================================
 
-\begin{itemize}[noitemsep]
-  \item Date dimension is built in \texttt{date\_dimension.py} from the min/max of order and delivery dates in SalesHeader.
-  \item FactSales is built by joining SalesLine to SalesHeader on \texttt{saleid}, then resolving all dimension keys via lookups and computing line-level measures from \texttt{httotalamount}, \texttt{ttctotalamount}, \texttt{promovalue}, etc.
-  \item FactInvoices uses a \textbf{dictionary-based lookup} from \texttt{salesid} to (accountid, orderdate) from SalesHeader instead of a pandas merge, to avoid memory blow-up when keys contain NaNs.
+Lors du nettoyage, le pipeline :
+\begin{itemize}[noitemsep,leftmargin=1.2em]
+  \item Supprime les lignes dont les colonnes de clé primaire ou étrangère sont nulles.
+  \item Élimine les lignes en doublon (par clé métier ; première occurrence conservée).
+  \item Applique les règles métier (ex. SalesLine \texttt{qty} $>$ 0).
+  \item Vérifie l'intégrité référentielle : les FK invalides sont mappées vers une ligne << Unknown >> ou supprimées selon la configuration.
 \end{itemize}
 
-%------------------------------------------------------------------------------
-\section{Data Quality \& Validation}
-%------------------------------------------------------------------------------
+Les métriques de qualité (row counts après chaque étape, nulls, doublons, violations RI) sont journalisées par le pipeline. La validation finale se fait via \texttt{check\_db} pour confirmer les row counts dans la base.
 
-During cleaning, the pipeline:
-\begin{itemize}[noitemsep]
-  \item Drops rows with null primary or foreign key columns.
-  \item Removes duplicate rows (by business key; first occurrence kept).
-  \item Applies business rules (e.g. SalesLine \texttt{qty} $>$ 0).
-  \item Enforces referential integrity: invalid FKs are either mapped to an ``Unknown'' dimension row (e.g. unknown customer, unknown product) or dropped, depending on configuration. Dimensions are pre-loaded with one ``Unknown'' row where applicable.
-\end{itemize}
+% ============================================================================
+\section{Problèmes \& Difficultés rencontrés}
+% ============================================================================
 
-Data quality metrics (row counts after each step, nulls, duplicates, RI violations) are logged by the cleaning pipeline. Final validation is done by running \texttt{check\_db} to confirm table row counts in the database.
+Bien que la Phase 1 soit terminée et stable, plusieurs problèmes non triviaux ont été rencontrés et ont influencé la conception finale.
 
-%------------------------------------------------------------------------------
-\section{Challenges \& Issues Encountered}
-%------------------------------------------------------------------------------
+\subsection{Limite de paramètres SQL Server}
 
-Although Phase 1 is complete and stable, several non-trivial issues were encountered and influenced the final design:
+\begin{warnbox}[Erreur de taille de lot]
+Lors du premier chargement des tables de faits avec \texttt{to\_sql}, le pipeline a échoué avec \textit{``The incoming request has too many parameters''}. SQL Server limite le nombre de paramètres par batch ($\sim$2100). Avec 15 colonnes par ligne, le maximum est $\sim$140 lignes/batch.
+\end{warnbox}
 
-\subsection{SQL Server Parameter Limit (Chunk Size Error)}
+\textbf{Solution} : Un \texttt{chunksize=100} explicite a été appliqué à tous les appels \texttt{to\_sql}, combiné avec \texttt{fast\_executemany=True} sur le moteur SQLAlchemy.
 
-When first loading fact tables with \texttt{to\_sql}, the pipeline failed with an error related to SQL Server's limit on the number of parameters per batch (e.g. \texttt{The incoming request has too many parameters}). Inserting millions of rows in a single call exceeded this limit. The fix was to pass an explicit \textbf{chunksize} to \texttt{to\_sql}; a value of \textbf{100} was chosen so that each batch stays under the parameter cap while still allowing reasonable throughput. All dimension and fact loads in \texttt{star\_loader.py} now use \texttt{chunksize=100} (and \texttt{fast\_executemany=True} on the engine where supported) so that the ETL runs to completion without parameter-limit errors.
+\subsection{Temps de chargement très long}
 
-\subsection{Very Long Load Time (Full ETL Duration)}
+Le chargement complet du schéma en étoile --- en particulier \textbf{FactSales} ($\sim$9,2M lignes) et \textbf{FactInvoices} ($\sim$1,4M lignes) --- peut prendre de l'ordre de \textbf{6 heures} sur une machine de développement typique. Le script de reprise (\texttt{run\_star\_etl\_resume.py}) a été introduit pour éviter de relancer ce long chargement lorsque seul FactInvoices doit être rechargé.
 
-Loading the full star schema---especially \textbf{FactSales} with approximately 9.2 million rows and \textbf{FactInvoices} with about 1.4 million rows---can take several hours (e.g. on the order of \textbf{6 hours}) on a typical development machine. This is due to the volume of data, chunked inserts, and key lookups. It is expected behavior for a full load; the resume script (\texttt{run\_star\_etl\_resume.py}) was introduced partly to avoid re-running this long load when only FactInvoices needs to be reloaded after a failure.
+\subsection{Erreur mémoire lors du merge de FactInvoices}
 
-\subsection{MemoryError in FactInvoices ETL Merge}
+\begin{warnbox}[ArrayMemoryError]
+La première implémentation utilisait un \texttt{merge} pandas entre Invoice et SalesHeader sur \texttt{salesid}. Les clés manquantes généraient un produit cartésien, épuisant la RAM ($\sim$12 Go).
+\end{warnbox}
 
-The first implementation of \texttt{FactInvoices} used a pandas \texttt{merge} between the cleaned Invoice dataframe and SalesHeader on \texttt{salesid}. Because both sides contained rows with missing or invalid keys, the join generated a large Cartesian product, quickly exhausting RAM and raising \texttt{numpy.\_core.\_exceptions.\_ArrayMemoryError}. The fix was to replace the merge with a \textbf{dictionary-based lookup}: a compact mapping from \texttt{salesid} to (AccountID, OrderDateKey) is built in memory from SalesHeader, and each Invoice row looks up its customer and date via simple dict access. This removed the blow-up and made the FactInvoices load both faster and safer.
+\textbf{Solution} : Remplacement du merge par un \textbf{lookup dictionnaire} : un mapping compact \texttt{salesid} $\to$ (AccountID, OrderDateKey) construit en mémoire, avec accès O(1) par ligne d'Invoice.
 
-\subsection{ETL Resume for FactInvoices Only}
+\subsection{Reprise de l'ETL pour FactInvoices}
 
-Because FactInvoices is the last and most sensitive step of the pipeline, a failure after loading FactSales previously required re-running the entire ETL (including all dimensions and FactSales). This was slow and risky for iteration. To address this, a dedicated script \texttt{run\_star\_etl\_resume.py} was added, together with helper functions in \texttt{star\_loader.py} that fetch existing dimension key lookups directly from SQL Server. This allows resuming the ETL by loading only FactInvoices while reusing already-loaded dimensions and FactSales.
+Un échec après FactSales nécessitait de relancer l'ETL en entier. Un script dédié \texttt{run\_star\_etl\_resume.py} a été ajouté avec des fonctions qui récupèrent les lookups de dimension existants depuis SQL Server, permettant de charger uniquement FactInvoices.
 
-\subsection{Memory Pressure When Loading Large Fact Tables}
+\subsection{Pression mémoire lors du profilage}
 
-Both raw SalesLine (in profiling) and FactSales (in SQL Server) contain tens of millions of rows. Attempting to load entire tables into memory on a machine with limited RAM (e.g. 12GB) can trigger \texttt{MemoryError}. For profiling, the mitigation was to use sample-based loading for the largest CSVs (e.g. load only 500K SalesLine rows while still counting total lines via a line count), so that the notebook runs without exhausting memory.
+Les tables SalesLine (dizaines de millions de lignes) et FactSales dépassent la capacité RAM. Pour le profilage, la solution a été d'utiliser un \textbf{chargement par échantillonnage} (500K lignes) tout en comptant le total via un line count.
 
-\subsection{Encoding and Decimal Issues}
+\subsection{Encodage et séparateur décimal}
 
-Some CSVs (e.g. Sector, SalesLine, Invoice) are encoded in CP1252 rather than UTF-8, and monetary columns use a comma as decimal separator. Early attempts to load everything as UTF-8 with default decimal handling produced decoding errors and incorrect numeric parsing. The extractor now stores encoding per-file and normalizes decimals where needed, which is reflected in \texttt{load\_csv.py} and the profiling notebook.
+Certains CSV (Sector, SalesLine, Invoice) sont encodés en CP1252 avec la virgule comme séparateur décimal. L'extracteur stocke désormais l'encodage par fichier et normalise les décimales si nécessaire.
 
-\subsection{Anonymous Customers in DimCustomer}
+\subsection{Clients anonymes dans DimCustomer}
 
-A significant number of customer records had missing or generic \texttt{AccountName} values (null, empty string, or ``Unknown''), which made reporting and EDA (e.g. top-customer charts) less meaningful. The fix was applied in two places. \textbf{(1) ETL logic}: In \texttt{star\_loader.py}, inside \texttt{load\_dim\_customer}, immediately after deduplication by \texttt{AccountID}, \texttt{AccountName} is now set to \texttt{CLIENT\_\{AccountID\}} whenever it is null, empty, ``Unknown'', or ``nan''; otherwise the original name is kept. This ensures every row in DimCustomer has a readable, unique label. \textbf{(2) Fixing existing data without reloading facts}: To correct a warehouse that was already loaded with the old logic, a dedicated script \texttt{reload\_dim\_customer.py} was added. It temporarily disables foreign-key constraints on \texttt{FactSales} and \texttt{FactInvoices}, deletes all rows from \texttt{DimCustomer}, runs the cleaning pipeline for Region, Sector, and Customer, then calls \texttt{load\_dim\_customer} (which now applies the \texttt{CLIENT\_} rule) and re-enables the constraints. Thus only DimCustomer is reloaded; the heavy fact tables (FactSales $\sim$9.2M rows, FactInvoices $\sim$1.4M rows) are left untouched. After running the script, roughly 10,342 customers show \texttt{AccountName} in the form \texttt{CLIENT\_\{AccountID\}} instead of null or ``Unknown''.
+\begin{warnbox}[$\sim$10\,342 clients sans nom]
+Un nombre important de clients avaient un \texttt{AccountName} null, vide ou ``Unknown'', rendant les analyses top-clients peu significatives.
+\end{warnbox}
 
-%------------------------------------------------------------------------------
-\section{Results}
-%------------------------------------------------------------------------------
+\textbf{Solution en deux volets} :
+\begin{enumerate}[noitemsep,leftmargin=1.2em]
+  \item \textbf{Logique ETL} : dans \texttt{load\_dim\_customer}, \texttt{AccountName} est défini à \texttt{CLIENT\_\{AccountID\}} quand il est null/vide/Unknown.
+  \item \textbf{Correction sans recharger les faits} : script \texttt{reload\_dim\_customer.py} qui désactive les FK sur FactSales et FactInvoices, recharge DimCustomer, puis réactive les contraintes. Les tables de faits volumineuses ne sont pas touchées.
+\end{enumerate}
 
-After a successful full ETL run:
-\begin{itemize}[noitemsep]
-  \item \textbf{DimDate}: One row per day in the data range (e.g. hundreds of rows).
-  \item \textbf{DimCustomer}: Tens of thousands of rows (cleaned from raw Customer; duplicates and null keys removed).
-  \item \textbf{DimSeller}, \textbf{DimProduct}, \textbf{DimPromotion}, \textbf{DimPaymentMethod}: Fully populated from cleaned sources.
-  \item \textbf{FactSales}: Approximately 9.2 million rows (line-level; cleaned from $\sim$10.5M raw lines after deduplication and RI).
-  \item \textbf{FactInvoices}: Approximately 1.4 million rows.
-\end{itemize}
+% ============================================================================
+\section{Résultats}
+% ============================================================================
 
-The database is fully loaded and validated, ready for downstream analytics and reporting.
+\begin{successbox}[Entrepôt de données alimenté et validé]
+Après une exécution complète et réussie de l'ETL, toutes les tables sont chargées et vérifiées :
+\end{successbox}
 
-%------------------------------------------------------------------------------
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\bfseries}l r X}
+\toprule
+\tableheadcolor
+\tableheadfont Table & \tableheadfont Lignes & \tableheadfont Description \\
+\midrule
+DimDate & 388 & Une ligne par jour dans la plage de données \\
+\rowcolor{lightbg}
+DimCustomer & 87\,653 & Clients nettoyés, doublons et clés nulles supprimés \\
+DimSeller & 410 & Vendeurs \\
+\rowcolor{lightbg}
+DimProduct & 2\,320 & Produits \\
+DimPromotion & 4 & Types de promotion \\
+\rowcolor{lightbg}
+DimPaymentMethod & 3 & Méthodes de paiement \\
+FactSales & 9\,229\,070 & Lignes de vente (nettoyé depuis $\sim$10,5M brutes) \\
+\rowcolor{lightbg}
+FactInvoices & 1\,437\,421 & Factures \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+La base de données est entièrement chargée et validée, prête pour les analyses et le reporting en aval.
+
+% ============================================================================
 \section{Conclusion}
-%------------------------------------------------------------------------------
+% ============================================================================
 
-Phase 1 is complete. The project has a clear structure, profiled raw data, a star-schema data warehouse in SQL Server, and a robust ETL pipeline with cleaning, referential integrity handling, and resume support. All dimension and fact tables are loaded and validated.
+\begin{sectionbox}
+La \textbf{Phase 1 est terminée}. Le projet dispose d'une structure claire, de données brutes profilées, d'un entrepôt de données en schéma en étoile dans SQL Server, et d'un pipeline ETL robuste avec nettoyage, gestion de l'intégrité référentielle et support de reprise. Toutes les tables de dimension et de faits sont chargées et validées.
+\end{sectionbox}
 
 \end{document}

@@ -8,16 +8,17 @@
 \usepackage{booktabs}
 \usepackage{hyperref}
 \usepackage{enumitem}
+\usepackage[french]{babel}
 
-\title{\textbf{Phase 2 Report: EDA \& Feature Engineering}\\Dislog PFE --- CLV, Segmentation \& Recommendation System}
-\author{Dislog PFE Project}
+\title{\textbf{Rapport Phase 2 : EDA \& Feature Engineering}\\PFE Dislog --- CLV, Segmentation \& Système de Recommandation}
+\author{Projet PFE Dislog}
 \date{\today}
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
-This report summarizes the work completed in Phase 2 of the Dislog PFE project. Phase 2 covers exploratory data analysis (EDA) on the star-schema data warehouse, connection to SQL Server, profiling of all dimension and fact tables, construction of RFM (Recency, Frequency, Monetary) features, customer behavior analysis, statistical summaries and distributions, and visualizations. The work is implemented in the Jupyter notebook \texttt{02\_eda.ipynb} and uses the data loaded in Phase 1. The outputs support Phase 3 (segmentation and churn modeling) and Phase 4 (CLV and dashboards).
+Ce rapport résume les travaux réalisés lors de la Phase 2 du projet PFE Dislog. Cette phase couvre l'analyse exploratoire des données (EDA) sur l'entrepôt de données en schéma en étoile, la connexion à SQL Server, le profilage de toutes les tables de dimension et de faits, la construction des features RFM (Récence, Fréquence, Montant), l'analyse du comportement client, les résumés statistiques et distributions, ainsi que les visualisations. Le travail est implémenté dans le notebook Jupyter \texttt{02\_eda.ipynb} et utilise les données chargées lors de la Phase 1. Les résultats alimentent la Phase 3 (segmentation et modélisation du churn) et la Phase 4 (CLV et tableaux de bord).
 \end{abstract}
 
 \tableofcontents
@@ -27,177 +28,177 @@ This report summarizes the work completed in Phase 2 of the Dislog PFE project. 
 \section{Introduction}
 %------------------------------------------------------------------------------
 
-Phase 2 builds on the data warehouse delivered in Phase 1. The objective is to connect to the SQL Server star schema, explore all eight tables (six dimensions, two facts), derive actionable features---in particular \textbf{RFM} (Recency, Frequency, Monetary) for customer segmentation---and produce statistical summaries and visualizations that inform business decisions and downstream modeling.
+La Phase 2 s'appuie sur l'entrepôt de données livré en Phase 1. L'objectif est de se connecter au schéma en étoile SQL Server, d'explorer les huit tables (six dimensions, deux faits), de dériver des features exploitables --- en particulier le \textbf{RFM} (Récence, Fréquence, Montant) pour la segmentation client --- et de produire des résumés statistiques et des visualisations qui éclairent les décisions métier et la modélisation en aval.
 
-\textbf{Phase 2} focuses on:
+La \textbf{Phase 2} porte sur :
 \begin{itemize}[noitemsep]
-  \item Setup and database connection; loading all star tables into the analysis environment
-  \item Exploratory data analysis on each table: shape, dtypes, samples, null counts, distinct key counts, date ranges, and FK sanity checks
-  \item Building RFM features and customer segments (e.g. Champions, At Risk, Hibernating)
-  \item Customer behavior analysis
-  \item Statistical summaries and distributions
-  \item Visualizations (charts and plots)
+  \item La mise en place et la connexion à la base de données ; le chargement de toutes les tables en étoile dans l'environnement d'analyse
+  \item L'analyse exploratoire de chaque table : forme, types, échantillons, comptages de nulls, comptages de clés distinctes, plages de dates et vérifications d'intégrité référentielle
+  \item La construction des features RFM et des segments clients (ex. Champions, À Risque, Dormants)
+  \item L'analyse du comportement client
+  \item Les résumés statistiques et distributions
+  \item Les visualisations (graphiques et diagrammes)
 \end{itemize}
 
-The main deliverable is the notebook \texttt{notebooks/02\_eda.ipynb}, which can be run with full fact tables or with sampled data to control memory usage.
+Le livrable principal est le notebook \texttt{notebooks/02\_eda.ipynb}, qui peut être exécuté avec les tables de faits complètes ou avec des données échantillonnées pour contrôler l'utilisation de la mémoire.
 
 %------------------------------------------------------------------------------
-\section{Setup \& Data Loading}
+\section{Mise en place \& Chargement des données}
 %------------------------------------------------------------------------------
 
-\subsection{Environment and Connection}
+\subsection{Environnement et connexion}
 
-The notebook adds the project root to \texttt{sys.path}, loads environment variables from \texttt{.env}, and uses \texttt{src.config.get\_sqlserver\_connection\_string()} to build a SQLAlchemy engine. Plotting defaults (matplotlib, seaborn) are set to match the profiling notebook (e.g. \texttt{seaborn-v0\_8-whitegrid}, figure size, font size).
+Le notebook ajoute la racine du projet au \texttt{sys.path}, charge les variables d'environnement depuis \texttt{.env}, et utilise \texttt{src.config.get\_sqlserver\_connection\_string()} pour construire un moteur SQLAlchemy. Les paramètres de visualisation (matplotlib, seaborn) sont configurés pour correspondre au notebook de profilage (ex. \texttt{seaborn-v0\_8-whitegrid}, taille de figure, taille de police).
 
-\subsection{Loading Star Tables}
+\subsection{Chargement des tables en étoile}
 
-All eight star tables are loaded via \texttt{pd.read\_sql}:
+Les huit tables en étoile sont chargées via \texttt{pd.read\_sql} :
 \begin{itemize}[noitemsep]
-  \item \textbf{Dimensions}: DimDate, DimCustomer, DimSeller, DimProduct, DimPromotion, DimPaymentMethod (full load).
-  \item \textbf{Facts}: FactSales ($\sim$9.2M rows) and FactInvoices ($\sim$1.4M rows).
+  \item \textbf{Dimensions} : DimDate, DimCustomer, DimSeller, DimProduct, DimPromotion, DimPaymentMethod (chargement complet).
+  \item \textbf{Faits} : FactSales ($\sim$9,2M lignes) et FactInvoices ($\sim$1,4M lignes).
 \end{itemize}
 
-To avoid \texttt{MemoryError} on machines with limited RAM, an option \texttt{USE\_FULL\_FACTS} is provided. When \texttt{False}, fact tables are loaded with \texttt{SELECT TOP (N)} (e.g. 500K for FactSales, 200K for FactInvoices). When \texttt{True}, the full tables are loaded; this is recommended only with sufficient free memory (e.g. 8GB+ for the notebook).
+Pour éviter les \texttt{MemoryError} sur les machines avec une RAM limitée, une option \texttt{USE\_FULL\_FACTS} est proposée. Lorsqu'elle est à \texttt{False}, les tables de faits sont chargées avec \texttt{SELECT TOP (N)} (ex. 500K pour FactSales, 200K pour FactInvoices). Lorsqu'elle est à \texttt{True}, les tables complètes sont chargées ; cela n'est recommandé qu'avec suffisamment de mémoire libre (ex. 8 Go+ pour le notebook).
 
 %------------------------------------------------------------------------------
-\section{Exploratory Data Analysis on All Tables}
+\section{Analyse exploratoire de toutes les tables}
 %------------------------------------------------------------------------------
 
-For each dimension and fact table, the notebook performs:
+Pour chaque table de dimension et de faits, le notebook réalise :
 \begin{itemize}[noitemsep]
-  \item \textbf{Shape and dtypes}: Row and column counts; column types.
-  \item \textbf{Column overview}: Null counts and null percentages per column (with visual styling: green when no nulls, red when nulls exist).
-  \item \textbf{Sample rows}: First five rows in a formatted table.
-  \item \textbf{Numeric summary}: \texttt{describe()} for numeric columns.
-  \item \textbf{Key metrics (fact tables only)}: Distinct counts for important keys (e.g. distinct SaleID, CustomerKey for FactSales; distinct InvoiceID, CustomerKey for FactInvoices).
+  \item \textbf{Forme et types} : Nombre de lignes et de colonnes ; types des colonnes.
+  \item \textbf{Vue d'ensemble des colonnes} : Comptages et pourcentages de valeurs nulles par colonne (avec mise en forme visuelle : vert quand il n'y a pas de nulls, rouge quand il y en a).
+  \item \textbf{Lignes d'exemple} : Les cinq premières lignes dans un tableau formaté.
+  \item \textbf{Résumé numérique} : \texttt{describe()} pour les colonnes numériques.
+  \item \textbf{Métriques clés (tables de faits uniquement)} : Comptages de valeurs distinctes pour les clés importantes (ex. SaleID distinct, CustomerKey pour FactSales ; InvoiceID distinct, CustomerKey pour FactInvoices).
 \end{itemize}
 
-Styling is unified via two helper functions: \texttt{profile\_dataframe} for dimension tables and \texttt{profile\_fact\_table} for fact tables (with key-metric cards). Output is HTML with a blue banner, section labels, and consistent table formatting.
+La mise en forme est unifiée via deux fonctions utilitaires : \texttt{profile\_dataframe} pour les tables de dimension et \texttt{profile\_fact\_table} pour les tables de faits (avec des cartes de métriques clés). La sortie est en HTML avec un bandeau bleu, des libellés de section et un formatage de tableau cohérent.
 
-\subsection{Date Ranges and FK Sanity}
+\subsection{Plages de dates et vérification d'intégrité référentielle}
 
-After profiling, the notebook checks:
+Après le profilage, le notebook vérifie :
 \begin{itemize}[noitemsep]
-  \item \textbf{OrderDateKey} and \textbf{PaymentDateKey} ranges (min/max) to confirm data is within expected calendar bounds (e.g. 2024).
-  \item \textbf{Referential integrity}: All CustomerKey values in FactSales and FactInvoices are verified to exist in DimCustomer (or a clear message is printed if not).
+  \item Les plages de \textbf{OrderDateKey} et \textbf{PaymentDateKey} (min/max) pour confirmer que les données sont dans les limites calendaires attendues (ex. 2024).
+  \item L'\textbf{intégrité référentielle} : Toutes les valeurs de CustomerKey dans FactSales et FactInvoices sont vérifiées comme existant dans DimCustomer (ou un message clair est affiché si ce n'est pas le cas).
 \end{itemize}
 
 %------------------------------------------------------------------------------
-\section{RFM Features}
+\section{Features RFM}
 %------------------------------------------------------------------------------
 
-RFM (Recency, Frequency, Monetary) is a standard framework for customer value and engagement. The notebook computes:
+Le RFM (Récence, Fréquence, Montant) est un cadre standard pour évaluer la valeur et l'engagement des clients. Le notebook calcule :
 
 \begin{itemize}[noitemsep]
-  \item \textbf{Recency}: Days since the customer's last order (or last payment). Lower values mean more recent activity.
-  \item \textbf{Frequency}: Number of transactions (e.g. distinct orders or invoices) per customer.
-  \item \textbf{Monetary}: Total amount spent (e.g. sum of line totals or payment amounts) per customer.
+  \item \textbf{Récence (Recency)} : Nombre de jours depuis la dernière commande (ou le dernier paiement) du client. Des valeurs plus faibles signifient une activité plus récente.
+  \item \textbf{Fréquence (Frequency)} : Nombre de transactions (ex. commandes ou factures distinctes) par client.
+  \item \textbf{Montant (Monetary)} : Montant total dépensé (ex. somme des totaux de lignes ou des montants de paiement) par client.
 \end{itemize}
 
-Aggregation is done at the customer level (CustomerKey). Reference date for recency is typically the maximum order or payment date in the dataset.
+L'agrégation est effectuée au niveau client (CustomerKey). La date de référence pour la récence est généralement la date maximale de commande ou de paiement dans le jeu de données.
 
-\subsection{Quartiles and Segments}
+\subsection{Quartiles et segments}
 
-Each RFM dimension is split into quartiles (1--4). For Recency, quartile 4 is assigned to the most recent customers and 1 to the least recent. For Frequency and Monetary, higher quartiles indicate higher frequency and spend. A composite \textbf{RFM score} (e.g. string of quartile digits) and a \textbf{Segment} label are then assigned. Example segments include:
+Chaque dimension RFM est découpée en quartiles (1--4). Pour la Récence, le quartile 4 est attribué aux clients les plus récents et le 1 aux moins récents. Pour la Fréquence et le Montant, des quartiles plus élevés indiquent une fréquence et des dépenses plus importantes. Un \textbf{score RFM} composite (ex. chaîne de chiffres de quartile) et un \textbf{libellé de segment} sont ensuite attribués. Exemples de segments :
 \begin{itemize}[noitemsep]
-  \item \textbf{Champions}: High recency, frequency, and monetary (best customers).
-  \item \textbf{Loyal Customers}, \textbf{Potential Loyalists}, \textbf{At Risk}, \textbf{Hibernating}, etc., based on combinations of R, F, M quartiles.
+  \item \textbf{Champions} : Récence, fréquence et montant élevés (meilleurs clients).
+  \item \textbf{Clients fidèles}, \textbf{Loyalistes potentiels}, \textbf{À Risque}, \textbf{Dormants}, etc., selon les combinaisons de quartiles R, F, M.
 \end{itemize}
 
-The segment logic is implemented so that high R (e.g. 3--4), high F, and high M map to Champions; low R and low F often map to Hibernating or At Risk, depending on M.
+La logique de segmentation est implémentée de sorte que R élevé (ex. 3--4), F élevé et M élevé correspondent aux Champions ; R faible et F faible correspondent souvent à Dormants ou À Risque, selon M.
 
 %------------------------------------------------------------------------------
-\section{Customer Behavior Analysis}
+\section{Analyse du comportement client}
 %------------------------------------------------------------------------------
 
-Beyond RFM, the notebook may include:
+Au-delà du RFM, le notebook peut inclure :
 \begin{itemize}[noitemsep]
-  \item Aggregations by customer (e.g. average order value, number of distinct products, order frequency over time).
-  \item Time-based patterns: sales or invoices by month, quarter, or day of week.
-  \item Cross-tabulations or pivot tables linking segments to other dimensions (e.g. region, product category).
+  \item Des agrégations par client (ex. valeur moyenne de commande, nombre de produits distincts, fréquence de commande dans le temps).
+  \item Des patterns temporels : ventes ou factures par mois, trimestre ou jour de la semaine.
+  \item Des tableaux croisés ou pivots reliant les segments à d'autres dimensions (ex. région, catégorie de produit).
 \end{itemize}
 
-These analyses help interpret the RFM segments and prepare features for Phase 3 (clustering, churn prediction).
+Ces analyses aident à interpréter les segments RFM et à préparer les features pour la Phase 3 (clustering, prédiction du churn).
 
 %------------------------------------------------------------------------------
-\section{Statistical Summaries and Distributions}
+\section{Résumés statistiques et distributions}
 %------------------------------------------------------------------------------
 
-The notebook provides statistical summaries and distributions for key measures, for example:
+Le notebook fournit des résumés statistiques et des distributions pour les mesures clés, par exemple :
 \begin{itemize}[noitemsep]
-  \item Central tendency and spread (mean, median, std, min, max) for numeric columns in fact tables (e.g. Quantity, LineTotalAmount, PaymentAmount).
-  \item Distribution of RFM values (e.g. histograms or box plots by segment).
-  \item Counts and proportions per segment or per dimension level.
+  \item Tendance centrale et dispersion (moyenne, médiane, écart-type, min, max) pour les colonnes numériques des tables de faits (ex. Quantity, LineTotalAmount, PaymentAmount).
+  \item Distribution des valeurs RFM (ex. histogrammes ou boîtes à moustaches par segment).
+  \item Comptages et proportions par segment ou par niveau de dimension.
 \end{itemize}
 
-These summaries support data quality checks and inform the choice of features and models in later phases.
+Ces résumés soutiennent les contrôles de qualité des données et éclairent le choix des features et des modèles dans les phases suivantes.
 
 %------------------------------------------------------------------------------
-\section{Visualizations}
+\section{Visualisations}
 %------------------------------------------------------------------------------
 
-Visualizations are produced with matplotlib and seaborn, aligned with the style set at the start of the notebook. Examples may include:
+Les visualisations sont produites avec matplotlib et seaborn, en accord avec le style défini au début du notebook. Les exemples incluent :
 \begin{itemize}[noitemsep]
-  \item Bar charts or histograms for segment sizes, sales by month, or top products.
-  \item Distributions of Recency, Frequency, and Monetary (e.g. histograms or KDE).
-  \item Heatmaps or grouped bar charts comparing segments along dimensions (e.g. region, payment method).
+  \item Des diagrammes à barres ou histogrammes pour la taille des segments, les ventes par mois ou les produits phares.
+  \item Des distributions de la Récence, de la Fréquence et du Montant (ex. histogrammes ou KDE).
+  \item Des heatmaps ou diagrammes à barres groupées comparant les segments selon des dimensions (ex. région, méthode de paiement).
 \end{itemize}
 
-Figures are configured with clear titles, axis labels, and legends so that results can be used in reports or presentations.
+Les figures sont configurées avec des titres clairs, des libellés d'axes et des légendes afin que les résultats puissent être utilisés dans les rapports ou les présentations.
 
 %------------------------------------------------------------------------------
-\section{Challenges \& Complexity in Phase 2}
+\section{Problèmes \& Complexités rencontrés en Phase 2}
 %------------------------------------------------------------------------------
 
-Although Phase 2 builds on a stable warehouse, several practical challenges and complexities were encountered:
+Bien que la Phase 2 s'appuie sur un entrepôt stable, plusieurs défis pratiques et complexités ont été rencontrés :
 
-\subsection{Working With Very Large Fact Tables}
+\subsection{Travail avec de très grandes tables de faits}
 
-FactSales ($\sim$9.2M rows) and FactInvoices ($\sim$1.4M rows) are large for interactive EDA in a notebook. Loading the full tables into pandas on a 12GB RAM machine is close to the memory limit and can raise \texttt{MemoryError} on some configurations. To manage this:
+FactSales ($\sim$9,2M lignes) et FactInvoices ($\sim$1,4M lignes) sont volumineuses pour une EDA interactive dans un notebook. Le chargement des tables complètes dans pandas sur une machine avec 12 Go de RAM est proche de la limite mémoire et peut déclencher \texttt{MemoryError} sur certaines configurations. Pour gérer cela :
 \begin{itemize}[noitemsep]
-  \item The notebook exposes a \texttt{USE\_FULL\_FACTS} flag that controls whether the full facts or a sampled TOP $N$ subset are loaded.
-  \item Sampling still preserves the structure and distributions needed to prototype RFM and behavior analysis, while full-data runs can be reserved for high-memory environments and final checks.
+  \item Le notebook expose un flag \texttt{USE\_FULL\_FACTS} qui contrôle si les faits complets ou un sous-ensemble échantillonné TOP $N$ sont chargés.
+  \item L'échantillonnage préserve la structure et les distributions nécessaires pour prototyper le RFM et l'analyse comportementale, tandis que les exécutions sur données complètes peuvent être réservées aux environnements à forte mémoire et aux vérifications finales.
 \end{itemize}
 
-\subsection{Performance of Aggregations and RFM Computation}
+\subsection{Performance des agrégations et du calcul RFM}
 
-Computing RFM features requires grouping millions of rows by CustomerKey and aggregating dates and monetary amounts. Naively written group-bys can be slow or memory-intensive. The notebook therefore:
+Le calcul des features RFM nécessite de regrouper des millions de lignes par CustomerKey et d'agréger les dates et les montants. Des group-bys écrits naïvement peuvent être lents ou gourmands en mémoire. Le notebook adopte donc :
 \begin{itemize}[noitemsep]
-  \item Uses compact group-by expressions that only keep the columns required for R, F, and M.
-  \item Reuses intermediate results instead of recomputing heavy aggregations multiple times.
-  \item Applies quartile cuts on pre-aggregated customer-level data, not on the raw fact tables.
+  \item Des expressions de group-by compactes qui ne conservent que les colonnes nécessaires pour R, F et M.
+  \item La réutilisation des résultats intermédiaires au lieu de recalculer les agrégations lourdes plusieurs fois.
+  \item L'application des coupes par quartile sur les données pré-agrégées au niveau client, et non sur les tables de faits brutes.
 \end{itemize}
 
-These design choices keep execution time reasonable even when using the full fact tables.
+Ces choix de conception maintiennent un temps d'exécution raisonnable même avec les tables de faits complètes.
 
-\subsection{Getting RFM Segmentation Rules Right}
+\subsection{Calibration des règles de segmentation RFM}
 
-It is easy to misinterpret RFM quartiles (e.g. treating low Recency scores as ``better'' when the scale is inverted). During experimentation, the initial segment rules were refined so that:
+Il est facile de mal interpréter les quartiles RFM (ex. traiter un score de Récence faible comme << meilleur >> alors que l'échelle est inversée). Au cours de l'expérimentation, les règles de segmentation initiales ont été affinées de sorte que :
 \begin{itemize}[noitemsep]
-  \item High Recency (recent activity), high Frequency, and high Monetary clearly map to ``Champions''.
-  \item Other segments such as ``Loyal'', ``At Risk'', and ``Hibernating'' follow consistent, business-meaningful thresholds.
+  \item Une Récence élevée (activité récente), une Fréquence élevée et un Montant élevé correspondent clairement aux << Champions >>.
+  \item Les autres segments tels que << Fidèles >>, << À Risque >> et << Dormants >> suivent des seuils cohérents et pertinents pour le métier.
 \end{itemize}
 
-Documenting these rules in the notebook ensures that later modeling phases can reuse the same segmentation logic without ambiguity.
+La documentation de ces règles dans le notebook garantit que les phases de modélisation ultérieures pourront réutiliser la même logique de segmentation sans ambiguïté.
 
 %------------------------------------------------------------------------------
-\section{Results and Deliverables}
+\section{Résultats et livrables}
 %------------------------------------------------------------------------------
 
-At the end of Phase 2:
+À la fin de la Phase 2 :
 \begin{itemize}[noitemsep]
-  \item All star tables have been profiled with a consistent, styled format (column overview, samples, numeric summary; key metrics for facts).
-  \item RFM features and customer segments are computed and available for downstream use.
-  \item Customer behavior analysis and statistical summaries document patterns in the data.
-  \item Visualizations illustrate distributions, segments, and key KPIs.
+  \item Toutes les tables en étoile ont été profilées avec un format cohérent et stylisé (vue d'ensemble des colonnes, échantillons, résumé numérique ; métriques clés pour les faits).
+  \item Les features RFM et les segments clients sont calculés et disponibles pour utilisation en aval.
+  \item L'analyse du comportement client et les résumés statistiques documentent les patterns dans les données.
+  \item Les visualisations illustrent les distributions, les segments et les KPIs clés.
 \end{itemize}
 
-The notebook \texttt{02\_eda.ipynb} is the single place for Phase 2 outputs; it can be re-run with full or sampled fact data depending on available RAM.
+Le notebook \texttt{02\_eda.ipynb} est le point unique pour les résultats de la Phase 2 ; il peut être ré-exécuté avec les données de faits complètes ou échantillonnées selon la RAM disponible.
 
 %------------------------------------------------------------------------------
 \section{Conclusion}
 %------------------------------------------------------------------------------
 
-Phase 2 is complete. The data warehouse is explored, RFM features and segments are built, and customer behavior is analyzed with statistical summaries and visualizations. The results feed into Phase 3 (segmentation and churn modeling) and Phase 4 (CLV prediction and dashboards).
+La Phase 2 est terminée. L'entrepôt de données est exploré, les features RFM et les segments sont construits, et le comportement client est analysé avec des résumés statistiques et des visualisations. Les résultats alimentent la Phase 3 (segmentation et modélisation du churn) et la Phase 4 (prédiction de la CLV et tableaux de bord).
 
 \end{document}
