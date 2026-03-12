@@ -15,7 +15,7 @@
 | **Encadrant(e) entreprise** | Oussama GUEMMAR                                                        |
 | **Encadrant(e) académique** | Boutaina ETTETUANI                                                     |
 | **Stagiaire**               | Mohammed FAKIR                                                         |
-| **Établissement**           | IT                                                                     |
+| **Établissement**           | Université Mundiapolis                                                 |
 
 ---
 

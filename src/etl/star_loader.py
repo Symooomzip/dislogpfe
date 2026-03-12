@@ -196,7 +196,17 @@ def load_fact_sales(
     """
     if df_line.empty or df_header.empty:
         return
-    header_cols = ["saleid", "accountid", "sellerid", "orderdate", "delivdate"]
+    header_cols = [
+        "saleid",
+        "accountid",
+        "sellerid",
+        "orderdate",
+        "delivdate",
+        "bruteamount",
+        "netamount",
+        "taxamount",
+        "totalamount",
+    ]
     h = df_header[header_cols].drop_duplicates(subset=["saleid"])
     df = df_line.merge(h, on="saleid", how="inner")
 
@@ -228,6 +238,10 @@ def load_fact_sales(
         "LineNetAmount": htt,
         "LineTaxAmount": (ttc - htt).fillna(0),
         "LineTotalAmount": ttc,
+        "HeaderBruteAmount": pd.to_numeric(df.get("bruteamount"), errors="coerce").fillna(0),
+        "HeaderNetAmount": pd.to_numeric(df.get("netamount"), errors="coerce").fillna(0),
+        "HeaderTaxAmount": pd.to_numeric(df.get("taxamount"), errors="coerce").fillna(0),
+        "HeaderTotalAmount": pd.to_numeric(df.get("totalamount"), errors="coerce").fillna(0),
     })
     out = out.dropna(subset=["OrderDateKey", "DeliveryDateKey", "CustomerKey", "SellerKey", "ProductKey", "PromotionKey"])
     out.to_sql("FactSales", engine, if_exists="append", index=False, method="multi", chunksize=CHUNKSIZE)

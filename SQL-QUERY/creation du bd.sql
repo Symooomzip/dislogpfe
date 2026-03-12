@@ -1,0 +1,26 @@
+USE master;
+GO
+
+IF DB_ID('DislogDWH') IS NOT NULL
+BEGIN
+    ALTER DATABASE DislogDWH SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+    DROP DATABASE DislogDWH;
+END
+GO
+
+CREATE DATABASE DislogDWH
+ON PRIMARY
+(
+    NAME = DislogDWH_Data,
+    FILENAME = 'C:\SQLData\DislogDWH.mdf',
+    SIZE = 512MB,
+    FILEGROWTH = 256MB
+)
+LOG ON
+(
+    NAME = DislogDWH_Log,
+    FILENAME = 'C:\SQLData\DislogDWH_log.ldf',
+    SIZE = 256MB,
+    FILEGROWTH = 128MB
+);
+GO
