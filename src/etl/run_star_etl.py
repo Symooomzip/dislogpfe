@@ -79,7 +79,11 @@ def main() -> int:
         promotion_lookup = load_dim_promotion(engine, promo_series)
 
         # DimPaymentMethod from distinct paymentmethod (Invoice)
-        pay_series = df_invoice["paymentmethod"].dropna().astype(str).str.strip() if "paymentmethod" in df_invoice.columns else pd.Series(dtype=object)
+        pay_series = (
+            df_invoice["paymentmethod"].dropna().astype(str).str.strip()
+            if "paymentmethod" in df_invoice.columns
+            else pd.Series(dtype=object)
+        )
         payment_method_lookup = load_dim_payment_method(engine, pay_series)
 
         customer_lookup = load_dim_customer(engine, df_customer, df_region, df_sector)

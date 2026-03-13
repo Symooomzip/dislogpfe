@@ -12,6 +12,8 @@ from sqlalchemy import create_engine, text
 
 from ..config import PROJECT_ROOT, get_sqlserver_connection_string
 from .cleaning import clean_customer, clean_region, clean_sector
+from .cleaning.schema import SALES_HEADER
+from .cleaning.staging import load_raw_staging_for_entity
 from .star_loader import load_dim_customer
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -37,11 +39,14 @@ def main() -> int:
             conn.execute(text("DELETE FROM DimCustomer"))
             conn.commit()
 
-        logger.info("Reloading DimCustomer with CLIENT_ fix...")
+        logger.info("Reloading DimCustomer with CLIENT_ fix (including header-only accounts)...")
         df_region, _ = clean_region(data_dir)
         df_sector, _ = clean_sector(data_dir)
         df_customer, _ = clean_customer(data_dir)
-        load_dim_customer(engine, df_customer, df_region, df_sector)
+        # Load raw SalesHeader staging BEFORE RI, to see all real accountid values
+        df_header_raw, _ = load_raw_staging_for_entity(SALES_HEADER, data_dir=data_dir)
+        df_header_accounts = df_header_raw[["accountid"]].dropna().drop_duplicates()
+        load_dim_customer(engine, df_customer, df_region, df_sector, df_header_accounts)
 
         logger.info("Re-enabling FK constraints...")
         with engine.connect() as conn:
